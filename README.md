@@ -1,6 +1,6 @@
-# My TypeScript Library
+# My Express V2 Library
 
-A modern TypeScript library with utility functions and type definitions.
+A modern express v2 
 
 ## Installation
 
@@ -13,48 +13,6 @@ yarn add my-ts-library
 ```
 
 ## Usage
-
-```typescript
-import { isNil, delay, formatCurrency } from 'my-ts-library';
-import type { Person, LibraryConfig, Status, Result } from 'my-ts-library';
-
-// Check if a value is nil
-console.log(isNil(null)); // true
-console.log(isNil(undefined)); // true
-console.log(isNil(0)); // false
-
-// Format currency
-console.log(formatCurrency(1234.56)); // $1,234.56
-console.log(formatCurrency(1234.56, 'de-DE', 'EUR')); // 1.234,56 €
-
-// Delay execution
-async function example() {
-  console.log('Start');
-  await delay(1000); // wait for 1 second
-  console.log('End');
-}
-
-// Use type definitions
-const person: Person = {
-  id: '123',
-  firstName: 'John',
-  lastName: 'Doe',
-  email: 'john@example.com'
-};
-
-const config: LibraryConfig = {
-  apiKey: 'your-api-key',
-  timeout: 5000,
-  debug: true
-};
-
-const status: Status = 'loading';
-
-const result: Result<string> = {
-  status: 'success',
-  data: 'Operation completed successfully'
-};
-```
 
 ## Features
 
