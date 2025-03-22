@@ -1,15 +1,15 @@
-# My Express V2 Library
+# My Cortex Library
 
-A modern express v2 
+A modern backend library
 
 ## Installation
 
 ```bash
-pnpm add my-ts-library
+pnpm add cortex
 # or
-npm install my-ts-library
+npm install cortex
 # or
-yarn add my-ts-library
+yarn add cortex
 ```
 
 ## Usage
@@ -30,8 +30,8 @@ yarn add my-ts-library
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/my-ts-library.git
-cd my-ts-library
+git clone https://github.com/Darktimeoff/cortex
+cd cortex
 
 # Install dependencies
 pnpm install

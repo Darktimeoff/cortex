@@ -1,7 +1,7 @@
 {
-  "name": "express-v2",
+  "name": "cortex",
   "version": "1.0.0",
-  "description": "A Express v2 library",
+  "description": "A Cortex library",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
