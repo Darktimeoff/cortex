@@ -1,14 +1,12 @@
-import { ControllerRegistry } from './controller-registry/controller-registry';
-import { ControllerRegistryInterface } from './controller-registry/controller-registry.interface';
-import Controller from './controller/controller';
-import { ControllerInterface } from './controller/controller.interface';
-import { CortexInterface } from './cortex.interface';
-import { ControllerHandler } from './controller/controller.type';
-import { ProtocolInterface } from './protocol/protocol.interface';
-import { ProtocolEnum } from './protocol/enum/protocol.enum';
-import { ProtocolFactory } from './protocol/protocol-factory';
+import { ProtocolEnum } from "@/protocol/enum/protocol.enum";
+import { ProtocolFactory, ProtocolInterface } from "@/protocol";
+import { CortexInterface } from "./cortex.interface";
+import { Controller, ControllerInterface } from "@/controller";
+import { ControllerRegistry, ControllerRegistryInterface } from "@/controller-registry";
+import { ControllerHandler } from "@/controller";
 
-export default class Cortex implements CortexInterface {
+
+export class Cortex implements CortexInterface {
     private protocol: ProtocolInterface;
     private router: ControllerInterface;
     private registry: ControllerRegistryInterface;

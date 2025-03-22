@@ -2,7 +2,7 @@ import { HttpMethod } from "@/generic/enum/http-method.enum";
 import { ControllerInterface } from "./controller.interface";
 import { ControllerHandler } from "./controller.type";
 
-class Controller implements ControllerInterface {
+export class Controller implements ControllerInterface {
     private routes: Map<string, {
         method: HttpMethod;
         handler: ControllerHandler;
@@ -56,5 +56,3 @@ class Controller implements ControllerInterface {
         return this.basePath ? `${this.basePath}/${path}` : path;
     }
 }
-
-export default Controller;

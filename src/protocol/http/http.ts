@@ -1,6 +1,6 @@
 import { ControllerRegistryInterface } from "@/controller-registry/controller-registry.interface";
 import { HttpInterface } from "./http.interface";
-import {createServer, Server, IncomingMessage, ServerResponse} from 'node:http'
+import {createServer, Server, IncomingMessage} from 'node:http'
 
 export class HttpProtocol implements HttpInterface {
     private server: Server;
@@ -15,7 +15,7 @@ export class HttpProtocol implements HttpInterface {
         return this;
     }
 
-    private handleRequest(req: IncomingMessage, res: ServerResponse) {
+    private handleRequest(req: IncomingMessage) {
         console.log(req.url);
         console.log(req.method);
     }
