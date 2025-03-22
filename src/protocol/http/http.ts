@@ -1,6 +1,8 @@
 import { ControllerRegistryInterface } from "@/controller-registry/controller-registry.interface";
 import { HttpInterface } from "./http.interface";
-import {createServer, Server, IncomingMessage} from 'node:http'
+import {createServer, Server, IncomingMessage, ServerResponse} from 'node:http'
+import { ControllerHandler, ControllerHandlerResponseType } from "@/controller";
+import { getPromisifiedValue, isHttpMethod } from "@/generic";
 
 export class HttpProtocol implements HttpInterface {
     private server: Server;
@@ -15,8 +17,53 @@ export class HttpProtocol implements HttpInterface {
         return this;
     }
 
-    private handleRequest(req: IncomingMessage) {
-        console.log(req.url);
-        console.log(req.method);
+    private async handleRequest(req: IncomingMessage, res: ServerResponse) {
+        const handler = this.getHandler(req);
+        if (!handler) {
+            this.handleNotFoundHandler(res);
+            return;
+        }
+
+        const response = await getPromisifiedValue(handler(req, res));
+        const contentType = res.getHeader('Content-Type') || this.getContentType(response);
+        res.setHeader('Content-Type', contentType);
+        res.setHeader('Powered-By', 'Cortex');
+        res.end(this.convertResponseToBody(response));
+    }
+
+    private getHandler(req: IncomingMessage): ControllerHandler | null {
+        const path = req.url;
+        const method = req.method;
+
+        if (!path || !isHttpMethod(method)) {
+            return null;
+        }
+
+        return this.controller.getHandler(path, method);
+    }
+
+    private handleNotFoundHandler(res: ServerResponse) {
+        res.statusCode = 404;
+        res.end("Not Found");
+    }
+
+    private getContentType(response: ControllerHandlerResponseType) {
+        if (typeof response === "object") {
+            return "application/json";
+        }
+
+        return "text/plain";
+    }
+
+    private convertResponseToBody(response: ControllerHandlerResponseType) {
+        if(response === undefined || response === null) {
+            return '';
+        }
+
+        if(typeof response === 'object') {
+            return JSON.stringify(response);
+        }
+
+        return response.toString();
     }
 }

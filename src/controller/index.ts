@@ -1,3 +1,3 @@
 export { Controller } from "./controller";
 export { ControllerInterface } from "./controller.interface";
-export { ControllerHandler } from "./controller.type";
+export { ControllerHandler, ControllerHandlerResponseType } from "./controller.type";
