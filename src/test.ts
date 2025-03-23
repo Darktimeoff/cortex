@@ -15,6 +15,9 @@ new Cortex()
         message: "Hello World",
         params: req.params
     }))
+    .post("/user", () => ({
+        message: "Create User",
+    }))
     .listen(3000, () => {
         console.log("http://localhost:3000");
     });
