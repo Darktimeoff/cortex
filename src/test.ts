@@ -1,23 +1,20 @@
 import { Cortex } from "./cortex";
+import { RequestInterface } from "./request";
 
-const cortex = new Cortex();
-
-cortex.get("/", () => {
-    return {
+new Cortex()
+    .get("/", (req) => ({
         message: "Hello World",
         empty: null,
         undefined: undefined,
         number: 1,
         string: "string",
         boolean: true,
-        object: {
-            message: "Hello World"
-        },
-        array: [1, 2, 3]
-    };
-});
-
-cortex.listen(3000, () => {
-    console.log("http://localhost:3000");
-});
-
+        params: req.params
+    }))
+    .get("/user/:id/post/:postId", (req: RequestInterface<{ id: string, postId: string }>) => ({
+        message: "Hello World",
+        params: req.params
+    }))
+    .listen(3000, () => {
+        console.log("http://localhost:3000");
+    });

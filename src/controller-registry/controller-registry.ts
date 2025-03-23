@@ -1,6 +1,5 @@
-import { ControllerInterface } from "@/controller/controller.interface";
+import { ControllerFindResultInterface, ControllerInterface } from "@/controller/controller.interface";
 import { ControllerRegistryInterface } from "./controller-registry.interface";
-import { ControllerHandler } from "@/controller/controller.type";
 import { HttpMethod } from "@/generic/enum/http-method.enum";
 
 export class ControllerRegistry implements ControllerRegistryInterface {
@@ -16,9 +15,9 @@ export class ControllerRegistry implements ControllerRegistryInterface {
         return this;
     }
 
-    getHandler(path: string, method: HttpMethod): ControllerHandler | null {
+    find(path: string, method: HttpMethod): ControllerFindResultInterface | null {
         for (const controller of this.controllers) {
-            const handler = controller.getHandler(path, method);
+            const handler = controller.find(path, method);
             if (handler) {
                 return handler;
             }

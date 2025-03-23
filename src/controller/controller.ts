@@ -1,55 +1,52 @@
 import { HttpMethod } from "@/generic/enum/http-method.enum";
-import { ControllerInterface } from "./controller.interface";
-import { ControllerHandler } from "./controller.type";
+import { ControllerFindResultInterface, ControllerInterface } from "./controller.interface";
+import { ControllerHandler, ControllerHandlerParamsType } from "./controller.type";
+import { Memoirist } from 'memoirist'
 
 export class Controller implements ControllerInterface {
-    private routes: Map<string, {
-        method: HttpMethod;
-        handler: ControllerHandler;
-    }> = new Map();
+    private readonly router: Memoirist<ControllerHandler<ControllerHandlerParamsType>>
 
     constructor(
         private readonly basePath?: string
     ) {
+        this.router = new Memoirist<ControllerHandler<ControllerHandlerParamsType>>();
     }
 
-    getHandler(path: string, method: HttpMethod): ControllerHandler | null {
-        const items = this.routes.entries();
+    find(path: string, method: HttpMethod): ControllerFindResultInterface | null {
+        const result = this.router.find(method, path);
 
-        for (const [key, value] of items) {
-            if (key === path && value.method === method) {
-                return value.handler;
-            }
+        if (!result) {
+            return null;
         }
-        
-        return null;
+
+        return {
+            handler: result.store,
+            params: result.params
+        };
     }
 
-    get(path: string, cb: ControllerHandler): ControllerInterface {
+    get<T extends ControllerHandlerParamsType>(path: string, cb: ControllerHandler<T>): ControllerInterface {
         this.addRoute(path, HttpMethod.GET, cb);
         return this;
     }
 
-    post(path: string, cb: ControllerHandler): ControllerInterface {
+    post<T extends ControllerHandlerParamsType>(path: string, cb: ControllerHandler<T>): ControllerInterface {
         this.addRoute(path, HttpMethod.POST, cb);
         return this;
     }
 
-    put(path: string, cb: ControllerHandler): ControllerInterface {
+    put<T extends ControllerHandlerParamsType>(path: string, cb: ControllerHandler<T>): ControllerInterface {
         this.addRoute(path, HttpMethod.PUT, cb);
         return this;
     }
 
-    delete(path: string, cb: ControllerHandler): ControllerInterface {
+    delete<T extends ControllerHandlerParamsType>(path: string, cb: ControllerHandler<T>): ControllerInterface {
         this.addRoute(path, HttpMethod.DELETE, cb);
         return this;
     }
 
-    private addRoute(path: string, method: HttpMethod, handler: ControllerHandler): void {
-        this.routes.set(this.getPath(path), {
-            method,
-            handler
-        });
+    private addRoute<T extends ControllerHandlerParamsType>(path: string, method: HttpMethod, handler: ControllerHandler<T>): void {
+        this.router.add(method, this.getPath(path), handler as ControllerHandler<Record<string, unknown>>);
     }
 
     private getPath(path: string): string {

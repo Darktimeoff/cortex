@@ -1,10 +1,15 @@
 import { HttpMethod } from "@/generic/enum/http-method.enum";
-import { ControllerHandler } from "./controller.type";
+import { ControllerHandler, ControllerHandlerParamsType } from "./controller.type";
 
-export interface ControllerInterface {
-    getHandler(path: string, method: HttpMethod): ControllerHandler | null;
-    get(path: string, cb: ControllerHandler): void;
-    post(path: string, cb: ControllerHandler): void;
-    put(path: string, cb: ControllerHandler): void;
-    delete(path: string, cb: ControllerHandler): void;
+export interface ControllerFindResultInterface {
+    handler: ControllerHandler;
+    params: ControllerHandlerParamsType;
+}
+
+export interface ControllerInterface<D = void> {
+    find(path: string, method: HttpMethod): ControllerFindResultInterface | null;
+    get<T extends ControllerHandlerParamsType>(path: string, cb: ControllerHandler<T>): D;
+    post<T extends ControllerHandlerParamsType>(path: string, cb: ControllerHandler<T>): D;
+    put<T extends ControllerHandlerParamsType>(path: string, cb: ControllerHandler<T>): D;
+    delete<T extends ControllerHandlerParamsType>(path: string, cb: ControllerHandler<T>): D;
 }

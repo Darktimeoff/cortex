@@ -1,7 +1,7 @@
 import { ProtocolEnum } from "@/protocol/enum/protocol.enum";
 import { ProtocolFactory, ProtocolInterface } from "@/protocol";
 import { CortexInterface } from "./cortex.interface";
-import { Controller, ControllerInterface } from "@/controller";
+import { Controller, ControllerHandlerParamsType, ControllerInterface } from "@/controller";
 import { ControllerRegistry, ControllerRegistryInterface } from "@/controller-registry";
 import { ControllerHandler } from "@/controller";
 
@@ -18,22 +18,22 @@ export class Cortex implements CortexInterface {
         this.protocol = ProtocolFactory.getProtocol(protocol, this.registry);
     }
 
-    get(path: string, cb: ControllerHandler): CortexInterface {
+    get<T extends ControllerHandlerParamsType>(path: string, cb: ControllerHandler<T>): CortexInterface {
         this.router.get(path, cb);
         return this;
     }
 
-    post(path: string, cb: ControllerHandler): CortexInterface {
+    post<T extends ControllerHandlerParamsType>(path: string, cb: ControllerHandler<T>): CortexInterface {
         this.router.post(path, cb);
         return this;
     }
 
-    put(path: string, cb: ControllerHandler): CortexInterface {
+    put<T extends ControllerHandlerParamsType>(path: string, cb: ControllerHandler<T>): CortexInterface {
         this.router.put(path, cb);
         return this;
     }
 
-    delete(path: string, cb: ControllerHandler): CortexInterface {
+    delete<T extends ControllerHandlerParamsType>(path: string, cb: ControllerHandler<T>): CortexInterface {
         this.router.delete(path, cb);
         return this;
     }

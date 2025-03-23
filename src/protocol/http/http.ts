@@ -1,8 +1,10 @@
 import { ControllerRegistryInterface } from "@/controller-registry/controller-registry.interface";
 import { HttpInterface } from "./http.interface";
 import {createServer, Server, IncomingMessage, ServerResponse} from 'node:http'
-import { ControllerHandler, ControllerHandlerResponseType } from "@/controller";
+import { ControllerFindResultInterface } from "@/controller";
 import { getPromisifiedValue, isHttpMethod } from "@/generic";
+import { Request } from "@/request";
+import { ControllerHandlerResponseType } from "@/controller/controller.type";
 
 export class HttpProtocol implements HttpInterface {
     private server: Server;
@@ -24,14 +26,21 @@ export class HttpProtocol implements HttpInterface {
             return;
         }
 
-        const response = await getPromisifiedValue(handler(req, res));
+        const request = new Request(handler.params, req);
+        
+        const response = await getPromisifiedValue(handler.handler(request, res));
+        
+        this.handleResponse(response, res);
+    }
+
+    private handleResponse(response: ControllerHandlerResponseType, res: ServerResponse) {
         const contentType = res.getHeader('Content-Type') || this.getContentType(response);
         res.setHeader('Content-Type', contentType);
         res.setHeader('Powered-By', 'Cortex');
         res.end(this.convertResponseToBody(response));
     }
 
-    private getHandler(req: IncomingMessage): ControllerHandler | null {
+    private getHandler(req: IncomingMessage): ControllerFindResultInterface | null {
         const path = req.url;
         const method = req.method;
 
@@ -39,7 +48,7 @@ export class HttpProtocol implements HttpInterface {
             return null;
         }
 
-        return this.controller.getHandler(path, method);
+        return this.controller.find(path, method);
     }
 
     private handleNotFoundHandler(res: ServerResponse) {

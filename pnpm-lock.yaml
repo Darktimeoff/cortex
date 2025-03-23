@@ -7,6 +7,10 @@ settings:
 importers:
 
   .:
+    dependencies:
+      memoirist:
+        specifier: ^0.3.0
+        version: 0.3.0
     devDependencies:
       '@commitlint/cli':
         specifier: ^19.8.0
@@ -2829,6 +2833,10 @@ packages:
     dependencies:
       tmpl: 1.0.5
     dev: true
+
+  /memoirist@0.3.0:
+    resolution: {integrity: sha512-wR+4chMgVPq+T6OOsk40u9Wlpw1Pjx66NMNiYxCQQ4EUJ7jDs3D9kTCeKdBOkvAiqXlHLVJlvYL01PvIJ1MPNg==}
+    dev: false
 
   /meow@12.1.1:
     resolution: {integrity: sha512-BhXM0Au22RwUneMPwSCnyhTOizdWoIEPU9sp0Aqa1PnDMR5Wv2FGXYDjuzJEIX+Eo2Rb8xuYe5jrnm5QowQFkw==}
