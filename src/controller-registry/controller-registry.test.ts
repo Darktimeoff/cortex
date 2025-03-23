@@ -59,4 +59,23 @@ describe('ControllerRegistry', () => {
     expect(result1?.handler).toBe(handler1);
     expect(result2?.handler).toBe(handler2);
   });
+
+  it('should find handler in multiple controllers with different base paths', () => {
+    const controller1 = new Controller('user');
+    const controller2 = new Controller('post');
+    const handler1 = jest.fn();
+    const handler2 = jest.fn();
+
+    controller1.get(':id/subscription', handler1);
+    controller2.get(':id/comment', handler2);
+
+    registry.add(controller1);
+    registry.add(controller2);
+    
+    const result1 = registry.find('/user/123/subscription', HttpMethod.GET);
+    const result2 = registry.find('/post/123/comment', HttpMethod.GET);
+
+    expect(result1?.handler).toBe(handler1);
+    expect(result2?.handler).toBe(handler2);
+  })
 }); 

@@ -75,4 +75,23 @@ describe('Controller', () => {
     expect(result?.handler).toBe(handler);
     expect(result?.params).toEqual({ id: '123', postId: '456' });
   });
+
+  it('should handle base path', () => {
+    const controller = new Controller('user');
+    const handler = jest.fn();
+    controller.get('', handler);
+
+    const result = controller.find('/user/', HttpMethod.GET);
+    
+    expect(result).not.toBeNull();
+    expect(result?.handler).toBe(handler);
+    expect(result?.params).toEqual({});
+
+    controller.get(':id', handler);
+
+    const result2 = controller.find('/user/123', HttpMethod.GET);
+    expect(result2).not.toBeNull();
+    expect(result2?.handler).toBe(handler);
+    expect(result2?.params).toEqual({ id: '123' });
+  })
 }); 
