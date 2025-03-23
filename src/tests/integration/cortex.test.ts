@@ -1,7 +1,7 @@
 import supertest from 'supertest';
-import { Cortex, CortexInterface } from '../../cortex';
-import { RequestInterface } from '../../request';
-import { Controller } from '../../controller/controller';
+import { Cortex, CortexInterface } from '@/cortex';
+import { RequestInterface } from '@/request';
+import { Controller } from '@/controller';
 
 const port = 2000;
 
