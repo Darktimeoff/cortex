@@ -5,11 +5,17 @@ import { ControllerFindResultInterface } from "@/controller";
 import { getPromisifiedValue, isHttpMethod } from "@/generic";
 import { Request } from "@/request";
 import { ControllerHandlerResponseType } from "@/controller/controller.type";
+import { ParserFactoryInterface } from "@/parser/parser-factory.interface";
+import { isContentType } from "@/generic/type-guard/is-content-type.type-guard";
+import { ParserResultType } from "@/parser/parser-factory.type";
 
 export class HttpProtocol implements HttpInterface {
     private server: Server;
 
-    constructor(protected readonly controller: ControllerRegistryInterface) {
+    constructor(
+        protected readonly controller: ControllerRegistryInterface,
+        protected readonly parserFactory: ParserFactoryInterface
+    ) {
         this.server = createServer();
         this.server.on('request', this.handleRequest.bind(this));
     }
@@ -31,11 +37,23 @@ export class HttpProtocol implements HttpInterface {
             return;
         }
 
-        const request = new Request(handler.params, req);
+        const body = await this.getBody(req);
+
+        const request = new Request(handler.params, req, body);
         
         const response = await getPromisifiedValue(handler.handler(request, res));
         
         this.handleResponse(response, res);
+    }
+
+    private async getBody(req: IncomingMessage): Promise<ParserResultType | null> {
+        let body: ParserResultType | null = null;
+
+        if(isContentType(req.headers['content-type'])) {
+            body = await this.parserFactory.parse(req.headers['content-type'], req);
+        }
+
+        return body;
     }
 
     private handleResponse(response: ControllerHandlerResponseType, res: ServerResponse) {

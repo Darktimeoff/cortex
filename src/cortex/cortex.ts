@@ -1,39 +1,42 @@
-import { ProtocolEnum } from "@/protocol/enum/protocol.enum";
+import { ProtocolEnum } from "@/protocol";
 import { ProtocolFactory, ProtocolInterface } from "@/protocol";
 import { CortexInterface } from "./cortex.interface";
 import { Controller, ControllerHandlerParamsType, ControllerInterface } from "@/controller";
 import { ControllerRegistry, ControllerRegistryInterface } from "@/controller-registry";
-import { ControllerHandler } from "@/controller";
-
+import { ControllerHandler } from "@/controller";       
+import { RequestBodyType } from "@/request";
+import { ParserFactory, ParserFactoryInterface } from "@/parser";
 
 export class Cortex implements CortexInterface {
     private protocol: ProtocolInterface;
     private router: ControllerInterface;
     private registry: ControllerRegistryInterface;
+    private parserFactory: ParserFactoryInterface;
 
     constructor(protocol: ProtocolEnum = ProtocolEnum.HTTP) {
         this.router = new Controller();
         this.registry = new ControllerRegistry();
+        this.parserFactory = new ParserFactory();
         this.registry.add(this.router);
-        this.protocol = ProtocolFactory.getProtocol(protocol, this.registry);
+        this.protocol = ProtocolFactory.getProtocol(protocol, this.registry, this.parserFactory);
     }
 
-    get<T extends ControllerHandlerParamsType>(path: string, cb: ControllerHandler<T>): CortexInterface {
+    get<T extends ControllerHandlerParamsType, TBody extends RequestBodyType>(path: string, cb: ControllerHandler<T, TBody>): CortexInterface {
         this.router.get(path, cb);
         return this;
     }
 
-    post<T extends ControllerHandlerParamsType>(path: string, cb: ControllerHandler<T>): CortexInterface {
+    post<T extends ControllerHandlerParamsType, TBody extends RequestBodyType>(path: string, cb: ControllerHandler<T, TBody>): CortexInterface {
         this.router.post(path, cb);
         return this;
     }
 
-    put<T extends ControllerHandlerParamsType>(path: string, cb: ControllerHandler<T>): CortexInterface {
+    put<T extends ControllerHandlerParamsType, TBody extends RequestBodyType>(path: string, cb: ControllerHandler<T, TBody>): CortexInterface {
         this.router.put(path, cb);
         return this;
     }
 
-    delete<T extends ControllerHandlerParamsType>(path: string, cb: ControllerHandler<T>): CortexInterface {
+    delete<T extends ControllerHandlerParamsType, TBody extends RequestBodyType>(path: string, cb: ControllerHandler<T, TBody>): CortexInterface {
         this.router.delete(path, cb);
         return this;
     }

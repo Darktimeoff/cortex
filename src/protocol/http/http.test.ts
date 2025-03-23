@@ -1,13 +1,30 @@
-import { HttpProtocol } from '@/protocol';
-import { ControllerRegistry } from '@/controller-registry';
-import { ServerResponse } from 'http';
-import { HttpInterface } from './http.interface';
+import { HttpProtocol, HttpInterface } from '@/protocol';
+import { ControllerRegistry, ControllerRegistryInterface } from '@/controller-registry';
+import { ServerResponse, IncomingMessage } from 'http';
+import { ParserFactory, ParserFactoryInterface } from '@/parser';
+import { ContentTypeEnum } from '@/generic/enum/content-type.enum';
+import { Readable } from 'stream';
+import { Controller } from '@/controller';
 
-const mockRequest = (method: string = 'GET', url: string = '/test') => ({
-  method,
-  url,
-  headers: {}
-});
+const mockRequest = (method: string = 'GET', url: string = '/test', contentType?: ContentTypeEnum, body?: string) => {
+  const req = new Readable() as unknown as IncomingMessage;
+  
+  req.method = method;
+  req.url = url;
+  req.headers = {};
+  
+  if (contentType) {
+    req.headers['content-type'] = contentType;
+  }
+  
+  if (body) {
+    req.push(body);
+  }
+  
+  req.push(null);
+  
+  return req;
+};
 
 const mockResponse = () => {
   const res: Partial<ServerResponse> = {
@@ -20,12 +37,14 @@ const mockResponse = () => {
 };
 
 describe('HttpProtocol', () => {
-  let httpProtocol: HttpProtocol;
-  let registry: ControllerRegistry;
+  let httpProtocol: HttpInterface;
+  let registry: ControllerRegistryInterface;
+  let parserFactory: ParserFactoryInterface;
   
   beforeEach(() => {
     registry = new ControllerRegistry();
-    httpProtocol = new HttpProtocol(registry);
+    parserFactory = new ParserFactory();
+    httpProtocol = new HttpProtocol(registry, parserFactory);
   });
   
   afterEach(() => {
@@ -156,6 +175,295 @@ describe('HttpProtocol', () => {
       const result = protocol.getHandler(req);
       
       expect(result).toBeNull();
+    });
+  });
+  
+  describe('getBody', () => {
+    it('should parse JSON body when content-type is application/json', async () => {
+      const protocol = httpProtocol as HttpProtocol;
+      const req = mockRequest('POST', '/test', ContentTypeEnum.JSON, '{"name":"test"}');
+      
+      //@ts-expect-error
+      const result = await protocol.getBody(req);
+      
+      expect(result).toEqual({ name: 'test' });
+    });
+    
+    it('should parse TEXT body when content-type is text/plain', async () => {
+      const protocol = httpProtocol as HttpProtocol;
+      const req = mockRequest('POST', '/test', ContentTypeEnum.TEXT, '{"name":"test"}');
+      
+      //@ts-expect-error
+      const result = await protocol.getBody(req);
+      
+      expect(result).toEqual({ name: 'test' });
+    });
+    
+    it('should parse JSON with string value', async () => {
+      const protocol = httpProtocol as HttpProtocol;
+      const req = mockRequest('POST', '/test', ContentTypeEnum.JSON, '"simple string"');
+      
+      //@ts-expect-error
+      const result = await protocol.getBody(req);
+      
+      expect(result).toBe('simple string');
+    });
+    
+    it('should parse JSON with number value', async () => {
+      const protocol = httpProtocol as HttpProtocol;
+      const req = mockRequest('POST', '/test', ContentTypeEnum.JSON, '42');
+      
+      //@ts-expect-error
+      const result = await protocol.getBody(req);
+      
+      expect(result).toBe(42);
+    });
+    
+    it('should parse JSON with boolean value', async () => {
+      const protocol = httpProtocol as HttpProtocol;
+      const req = mockRequest('POST', '/test', ContentTypeEnum.JSON, 'true');
+      
+      //@ts-expect-error
+      const result = await protocol.getBody(req);
+      
+      expect(result).toBe(true);
+    });
+    
+    it('should parse TEXT with string value', async () => {
+      const protocol = httpProtocol as HttpProtocol;
+      const req = mockRequest('POST', '/test', ContentTypeEnum.TEXT, '"simple string"');
+      
+      //@ts-expect-error
+      const result = await protocol.getBody(req);
+      
+      expect(result).toBe('simple string');
+    });
+    
+    it('should parse TEXT with number value', async () => {
+      const protocol = httpProtocol as HttpProtocol;
+      const req = mockRequest('POST', '/test', ContentTypeEnum.TEXT, '42');
+      
+      //@ts-expect-error
+      const result = await protocol.getBody(req);
+      
+      expect(result).toBe(42);
+    });
+    
+    it('should parse TEXT with boolean value', async () => {
+      const protocol = httpProtocol as HttpProtocol;
+      const req = mockRequest('POST', '/test', ContentTypeEnum.TEXT, 'true');
+      
+      //@ts-expect-error
+      const result = await protocol.getBody(req);
+      
+      expect(result).toBe(true);
+    });
+    
+    it('should return null when no content-type is provided', async () => {
+      const protocol = httpProtocol as HttpProtocol;
+      const req = mockRequest('POST', '/test');
+      
+      //@ts-expect-error
+      const result = await protocol.getBody(req);
+      
+      expect(result).toBeNull();
+    });
+  });
+  
+  describe('handleRequest with body', () => {
+    it('should pass request body to handler', async () => {
+      const controller = new Controller();
+      const handlerSpy = jest.fn().mockReturnValue('ok');
+      
+      controller.post('/test', handlerSpy);
+      registry.add(controller);
+      
+      const req = mockRequest('POST', '/test', ContentTypeEnum.JSON, '{"data":"test"}');
+      const res = mockResponse();
+      
+      // Имитируем событие 'request' для проверки обработки
+      //@ts-expect-error
+      httpProtocol.server.emit('request', req, res);
+      
+      // Даём время на асинхронную обработку
+      await new Promise(resolve => setTimeout(resolve, 10));
+      
+      expect(handlerSpy).toHaveBeenCalled();
+      expect(handlerSpy.mock.calls[0][0].body).toEqual({ data: 'test' });
+    });
+    
+    it('should pass TEXT content-type body to handler', async () => {
+      const controller = new Controller();
+      const handlerSpy = jest.fn().mockReturnValue('ok');
+      
+      controller.post('/test', handlerSpy);
+      registry.add(controller);
+      
+      const req = mockRequest('POST', '/test', ContentTypeEnum.TEXT, '{"message":"hello"}');
+      const res = mockResponse();
+      
+      // Имитируем событие 'request' для проверки обработки
+      //@ts-expect-error
+      httpProtocol.server.emit('request', req, res);
+      
+      // Даём время на асинхронную обработку
+      await new Promise(resolve => setTimeout(resolve, 10));
+      
+      expect(handlerSpy).toHaveBeenCalled();
+      expect(handlerSpy.mock.calls[0][0].body).toEqual({ message: 'hello' });
+    });
+    
+    it('should pass string value in JSON body to handler', async () => {
+      const controller = new Controller();
+      const handlerSpy = jest.fn().mockReturnValue('ok');
+      
+      controller.post('/test-string', handlerSpy);
+      registry.add(controller);
+      
+      const req = mockRequest('POST', '/test-string', ContentTypeEnum.JSON, '"string value"');
+      const res = mockResponse();
+      
+      // Имитируем событие 'request' для проверки обработки
+      //@ts-expect-error
+      httpProtocol.server.emit('request', req, res);
+      
+      // Даём время на асинхронную обработку
+      await new Promise(resolve => setTimeout(resolve, 10));
+      
+      expect(handlerSpy).toHaveBeenCalled();
+      expect(handlerSpy.mock.calls[0][0].body).toBe('string value');
+      expect(typeof handlerSpy.mock.calls[0][0].body).toBe('string');
+    });
+    
+    it('should pass number value in JSON body to handler', async () => {
+      const controller = new Controller();
+      const handlerSpy = jest.fn().mockReturnValue('ok');
+      
+      controller.post('/test-number', handlerSpy);
+      registry.add(controller);
+      
+      const req = mockRequest('POST', '/test-number', ContentTypeEnum.JSON, '42.5');
+      const res = mockResponse();
+      
+      // Имитируем событие 'request' для проверки обработки
+      //@ts-expect-error
+      httpProtocol.server.emit('request', req, res);
+      
+      // Даём время на асинхронную обработку
+      await new Promise(resolve => setTimeout(resolve, 10));
+      
+      expect(handlerSpy).toHaveBeenCalled();
+      expect(handlerSpy.mock.calls[0][0].body).toBe(42.5);
+      expect(typeof handlerSpy.mock.calls[0][0].body).toBe('number');
+    });
+    
+    it('should pass boolean value in JSON body to handler', async () => {
+      const controller = new Controller();
+      const handlerSpy = jest.fn().mockReturnValue('ok');
+      
+      controller.post('/test-boolean', handlerSpy);
+      registry.add(controller);
+      
+      const req = mockRequest('POST', '/test-boolean', ContentTypeEnum.JSON, 'false');
+      const res = mockResponse();
+      
+      // Имитируем событие 'request' для проверки обработки
+      //@ts-expect-error
+      httpProtocol.server.emit('request', req, res);
+      
+      // Даём время на асинхронную обработку
+      await new Promise(resolve => setTimeout(resolve, 10));
+      
+      expect(handlerSpy).toHaveBeenCalled();
+      expect(handlerSpy.mock.calls[0][0].body).toBe(false);
+      expect(typeof handlerSpy.mock.calls[0][0].body).toBe('boolean');
+    });
+    
+    it('should pass string value in TEXT body to handler', async () => {
+      const controller = new Controller();
+      const handlerSpy = jest.fn().mockReturnValue('ok');
+      
+      controller.post('/test-text-string', handlerSpy);
+      registry.add(controller);
+      
+      const req = mockRequest('POST', '/test-text-string', ContentTypeEnum.TEXT, '"text string"');
+      const res = mockResponse();
+      
+      // Имитируем событие 'request' для проверки обработки
+      //@ts-expect-error
+      httpProtocol.server.emit('request', req, res);
+      
+      // Даём время на асинхронную обработку
+      await new Promise(resolve => setTimeout(resolve, 10));
+      
+      expect(handlerSpy).toHaveBeenCalled();
+      expect(handlerSpy.mock.calls[0][0].body).toBe('text string');
+      expect(typeof handlerSpy.mock.calls[0][0].body).toBe('string');
+    });
+    
+    it('should pass number value in TEXT body to handler', async () => {
+      const controller = new Controller();
+      const handlerSpy = jest.fn().mockReturnValue('ok');
+      
+      controller.post('/test-text-number', handlerSpy);
+      registry.add(controller);
+      
+      const req = mockRequest('POST', '/test-text-number', ContentTypeEnum.TEXT, '999');
+      const res = mockResponse();
+      
+      // Имитируем событие 'request' для проверки обработки
+      //@ts-expect-error
+      httpProtocol.server.emit('request', req, res);
+      
+      // Даём время на асинхронную обработку
+      await new Promise(resolve => setTimeout(resolve, 10));
+      
+      expect(handlerSpy).toHaveBeenCalled();
+      expect(handlerSpy.mock.calls[0][0].body).toBe(999);
+      expect(typeof handlerSpy.mock.calls[0][0].body).toBe('number');
+    });
+    
+    it('should pass boolean value in TEXT body to handler', async () => {
+      const controller = new Controller();
+      const handlerSpy = jest.fn().mockReturnValue('ok');
+      
+      controller.post('/test-text-boolean', handlerSpy);
+      registry.add(controller);
+      
+      const req = mockRequest('POST', '/test-text-boolean', ContentTypeEnum.TEXT, 'true');
+      const res = mockResponse();
+      
+      // Имитируем событие 'request' для проверки обработки
+      //@ts-expect-error
+      httpProtocol.server.emit('request', req, res);
+      
+      // Даём время на асинхронную обработку
+      await new Promise(resolve => setTimeout(resolve, 10));
+      
+      expect(handlerSpy).toHaveBeenCalled();
+      expect(handlerSpy.mock.calls[0][0].body).toBe(true);
+      expect(typeof handlerSpy.mock.calls[0][0].body).toBe('boolean');
+    });
+    
+    it('should pass null body when no content-type', async () => {
+      const controller = new Controller();
+      const handlerSpy = jest.fn().mockReturnValue('ok');
+      
+      controller.post('/test', handlerSpy);
+      registry.add(controller);
+      
+      const req = mockRequest('POST', '/test');
+      const res = mockResponse();
+      
+      // Имитируем событие 'request' для проверки обработки
+      //@ts-expect-error
+      httpProtocol.server.emit('request', req, res);
+      
+      // Даём время на асинхронную обработку
+      await new Promise(resolve => setTimeout(resolve, 10));
+      
+      expect(handlerSpy).toHaveBeenCalled();
+      expect(handlerSpy.mock.calls[0][0].body).toBeNull();
     });
   });
 }); 

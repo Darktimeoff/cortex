@@ -15,8 +15,10 @@ new Cortex()
         message: "Hello World",
         params: req.params
     }))
-    .post("/user", () => ({
+    .post("user", (req: RequestInterface<{}, { name: string, email: string }>) => ({
         message: "Create User",
+        body: req.body,
+        bodyType: typeof req.body
     }))
     .listen(3000, () => {
         console.log("http://localhost:3000");
