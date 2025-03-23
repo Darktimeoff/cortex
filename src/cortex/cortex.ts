@@ -38,8 +38,18 @@ export class Cortex implements CortexInterface {
         return this;
     }
 
-    listen(port: number, callback?: () => void) {
+    add(controller: ControllerInterface): CortexInterface {
+        this.registry.add(controller);
+        return this;
+    }
+
+    listen(port: number, callback?: () => void): CortexInterface {
         this.protocol.listen(port, callback)
+        return this;
+    }
+
+    close(): CortexInterface {
+        this.protocol.close();
         return this;
     }
 }

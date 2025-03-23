@@ -1,0 +1,62 @@
+import { ControllerRegistry } from './controller-registry';
+import { Controller } from '@/controller/controller';
+import { HttpMethod } from '@/generic/enum/http-method.enum';
+
+describe('ControllerRegistry', () => {
+  let registry: ControllerRegistry;
+  let controller: Controller;
+
+  beforeEach(() => {
+    registry = new ControllerRegistry();
+    controller = new Controller();
+    controller.get('/test', jest.fn());
+  });
+
+  it('should add controller to registry', () => {
+    const result = registry.add(controller);
+    
+    expect(result).toBe(registry);
+  });
+
+  it('should remove controller from registry', () => {
+    registry.add(controller);
+    const result = registry.remove(controller);
+    
+    expect(result).toBe(registry);
+  });
+
+  it('should find handler in registered controller', () => {
+    registry.add(controller);
+    
+    const result = registry.find('/test', HttpMethod.GET);
+    
+    expect(result).not.toBeNull();
+  });
+
+  it('should return null if handler not found', () => {
+    registry.add(controller);
+    
+    const result = registry.find('/not-exists', HttpMethod.GET);
+    
+    expect(result).toBeNull();
+  });
+
+  it('should find handler in multiple controllers', () => {
+    const controller1 = new Controller();
+    const controller2 = new Controller();
+    const handler1 = jest.fn();
+    const handler2 = jest.fn();
+    
+    controller1.get('/route1', handler1);
+    controller2.get('/route2', handler2);
+    
+    registry.add(controller1);
+    registry.add(controller2);
+    
+    const result1 = registry.find('/route1', HttpMethod.GET);
+    const result2 = registry.find('/route2', HttpMethod.GET);
+    
+    expect(result1?.handler).toBe(handler1);
+    expect(result2?.handler).toBe(handler2);
+  });
+}); 

@@ -19,6 +19,11 @@ export class HttpProtocol implements HttpInterface {
         return this;
     }
 
+    close(): HttpInterface {
+        this.server.close();
+        return this;
+    }
+
     private async handleRequest(req: IncomingMessage, res: ServerResponse) {
         const handler = this.getHandler(req);
         if (!handler) {
