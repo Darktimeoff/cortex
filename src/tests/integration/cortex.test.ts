@@ -2,12 +2,13 @@ import supertest from 'supertest';
 import { Cortex, CortexInterface } from '@/cortex';
 import { RequestInterface } from '@/request';
 import { Controller } from '@/controller';
+import TestAgent from 'supertest/lib/agent';
 
 const port = 2000;
 
 describe('Cortex Integration Tests', () => {
     let cortex: CortexInterface;
-    let request: any;
+    let request: TestAgent;
 
     beforeAll(async () => {
         cortex = new Cortex();
