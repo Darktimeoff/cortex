@@ -1,6 +1,7 @@
 import { ControllerFindResultInterface, ControllerInterface } from "@/controller/controller.interface";
 import { ControllerRegistryInterface } from "./controller-registry.interface";
 import { HttpMethod } from "@/generic/enum/http-method.enum";
+import { MiddlewareChain, MiddlewareChainInterface } from "@/middleware";
 
 export class ControllerRegistry implements ControllerRegistryInterface {
     private controllers: ControllerInterface[] = [];
@@ -23,6 +24,10 @@ export class ControllerRegistry implements ControllerRegistryInterface {
             }
         }
         return null;
+    }
+
+    findAllMiddlewareByPath(path: string): MiddlewareChainInterface {
+        return new MiddlewareChain(this.controllers.map(c => c.findAllMiddlewareByPath(path).middlewares).flat());
     }
 }
     

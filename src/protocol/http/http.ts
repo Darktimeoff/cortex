@@ -1,13 +1,15 @@
 import { ControllerRegistryInterface } from "@/controller-registry/controller-registry.interface";
 import { HttpInterface } from "./http.interface";
 import {createServer, Server, IncomingMessage, ServerResponse} from 'node:http'
-import { ControllerFindResultInterface } from "@/controller";
+import { ControllerFindResultInterface, ControllerHandlerParamsType } from "@/controller";
 import { getPromisifiedValue, isHttpMethod } from "@/generic";
-import { Request } from "@/request";
+import { Request, RequestInterface } from "@/request";
 import { ControllerHandlerResponseType } from "@/controller/controller.type";
 import { ParserFactoryInterface } from "@/parser/parser-factory.interface";
 import { isContentType } from "@/generic/type-guard/is-content-type.type-guard";
 import { ParserResultType } from "@/parser/parser-factory.type";
+import { Response, ResponseInterface } from "@/response";
+
 
 export class HttpProtocol implements HttpInterface {
     private server: Server;
@@ -37,13 +39,26 @@ export class HttpProtocol implements HttpInterface {
             return;
         }
 
+        const { request, response } = await this.getReqAndRes(handler.params, req, res);
+        await this.executeMiddleware(req.url, request, response);
+        
+        const responseValue = await getPromisifiedValue(handler.handler(request, response));
+        
+        this.handleResponse(responseValue, res);
+    }
+
+    private async executeMiddleware(path: string | undefined, req: RequestInterface, res: ResponseInterface) {
+        const middlewareChain = this.controller.findAllMiddlewareByPath(path || '/');
+        await middlewareChain.execute(req, res);
+    }
+
+    private async getReqAndRes(params: ControllerHandlerParamsType, req: IncomingMessage, res: ServerResponse): Promise<{ request: RequestInterface, response: ResponseInterface }> {
         const body = await this.getBody(req);
 
-        const request = new Request(handler.params, req, body);
-        
-        const response = await getPromisifiedValue(handler.handler(request, res));
-        
-        this.handleResponse(response, res);
+        const request = new Request(params, req, body);
+        const response = new Response(res);
+
+        return { request, response };
     }
 
     private async getBody(req: IncomingMessage): Promise<ParserResultType | null> {

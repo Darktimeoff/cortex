@@ -93,5 +93,49 @@ describe('Controller', () => {
     expect(result2).not.toBeNull();
     expect(result2?.handler).toBe(handler);
     expect(result2?.params).toEqual({ id: '123' });
-  })
+  });
+
+  it('should add middleware', () => {
+    const middleware = jest.fn();
+    controller.use(middleware);
+    const chain = controller.findAllMiddlewareByPath('/any-path');
+    expect(chain.middlewares).toContain(middleware);
+  });
+
+  it('should add middleware with path', () => {
+    const path = '/test';
+    const middleware = jest.fn();
+    controller.use(path, middleware);
+    const chain = controller.findAllMiddlewareByPath(path);
+    expect(chain.middlewares).toContain(middleware);
+  });
+
+  it('should return empty array if no middleware', () => {
+    const chain = controller.findAllMiddlewareByPath('/any-path');
+    expect(chain.middlewares).toEqual([]);
+  });
+
+  it('should find one middleware by path', () => {
+    const middleware = jest.fn();
+    const middleware2 = jest.fn();
+    const middleware3 = jest.fn();
+    controller.use('/test/', middleware);
+    controller.use('/user/', middleware2);
+    controller.use(middleware3);
+    const chain = controller.findAllMiddlewareByPath('/test/');
+    expect(chain.middlewares).toContain(middleware);
+    expect(chain.middlewares).not.toContain(middleware2);
+    expect(chain.middlewares).toContain(middleware3);
+
+    const chain2 = controller.findAllMiddlewareByPath('/user/');
+    expect(chain2.middlewares).not.toContain(middleware);
+    expect(chain2.middlewares).toContain(middleware2);
+    expect(chain2.middlewares).toContain(middleware3);
+
+    const chain3 = controller.findAllMiddlewareByPath('/');
+    expect(chain3.middlewares).not.toContain(middleware);
+    expect(chain3.middlewares).not.toContain(middleware2);
+    expect(chain3.middlewares).toContain(middleware3);
+  });
+  
 }); 

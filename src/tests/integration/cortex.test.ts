@@ -322,4 +322,155 @@ describe('Cortex Integration Tests', () => {
             type: 'boolean'
         });
     });
+
+    it('should execute middleware in correct order', async () => {
+        const executionOrder: number[] = [];
+        
+        cortex.use(async (_req, _res, next) => {
+            executionOrder.push(1);
+            await next();
+        });
+        
+        cortex.use(async (_req, _res, next) => {
+            executionOrder.push(2);
+            await next();
+        });
+        
+        cortex.get('/middleware-order', () => ({ success: true }));
+        
+        const response = await request.get('/middleware-order');
+        
+        expect(response.status).toBe(200);
+        expect(executionOrder).toEqual([1, 2]);
+    });
+
+    it('should modify request in middleware and pass modified data to handler', async () => {
+        cortex.use(async (req, _res, next) => {
+            // @ts-ignore
+            req.modifiedData = 'modified by middleware';
+            await next();
+        });
+        
+        cortex.get('/middleware-modify', (req: RequestInterface) => {
+            // @ts-ignore
+            return { success: true, data: req.modifiedData };
+        });
+        
+        const response = await request.get('/middleware-modify');
+        
+        expect(response.status).toBe(200);
+        expect(response.body).toEqual({ 
+            success: true, 
+            data: 'modified by middleware'
+        });
+    });
+
+    it('should stop middleware chain and return response', async () => {
+        cortex.use(async (_req, res) => {
+            // @ts-ignore
+            res.response.setHeader('X-Stopped', 'true');
+            return;
+        });
+        
+        cortex.use(async (_req, _res, next) => {
+            await next();
+        });
+        
+        cortex.get('/middleware-stop', () => ({ success: true }));
+        
+        const response = await request.get('/middleware-stop');
+        
+        expect(response.headers['x-stopped']).toBe('true');
+    });
+
+    it('should handle middleware for all routes with wildcard path', async () => {
+        // Create new instance to avoid middleware from other tests
+        const newCortex = new Cortex();
+        newCortex.listen(port + 3);
+        const newRequest = supertest(`http://localhost:${port + 3}`);
+        
+        // Add middleware with root path - should run for all routes
+        newCortex.use('/', async (_req, res, next) => {
+            // @ts-ignore
+            res.response.setHeader('X-Global-Middleware', 'executed');
+            await next();
+        });
+        
+        // Add two different routes
+        newCortex.get('/test-global-middleware', () => ({ success: true }));
+        newCortex.get('/another-route', () => ({ success: true }));
+        
+        // Test first route
+        const response1 = await newRequest.get('/test-global-middleware');
+        expect(response1.status).toBe(200);
+        expect(response1.headers['x-global-middleware']).toBe('executed');
+        
+        // Test second route
+        const response2 = await newRequest.get('/another-route');
+        expect(response2.status).toBe(200);
+        expect(response2.headers['x-global-middleware']).toBe('executed');
+        
+        // Cleanup
+        newCortex.close();
+    });
+
+    it('should handle middleware with path correctly', async () => {
+        // Create new instance to avoid middleware from other tests
+        const newCortex = new Cortex();
+        newCortex.listen(port + 2);
+        const newRequest = supertest(`http://localhost:${port + 2}`);
+        
+        let apiPathExecuted = false;
+        let rootPathExecuted = false;
+        
+        newCortex.use('/api', async (_req, _res, next) => {
+            apiPathExecuted = true;
+            await next();
+        });
+        
+        newCortex.use('/', async (_req, _res, next) => {
+            rootPathExecuted = true;
+            await next();
+        });
+        
+        newCortex.get('/api/data', () => ({ success: true }));
+        
+        const response = await newRequest.get('/api/data');
+        
+        expect(response.status).toBe(200);
+        expect(apiPathExecuted).toBe(true);
+        expect(rootPathExecuted).toBe(true);
+        
+        // Reset flags
+        apiPathExecuted = false;
+        rootPathExecuted = false;
+        
+        // Test path that doesn't match /api
+        newCortex.get('/other/path', () => ({ success: true }));
+        
+        await newRequest.get('/other/path');
+        
+        expect(apiPathExecuted).toBe(false);
+        expect(rootPathExecuted).toBe(true);
+        
+        // Cleanup
+        newCortex.close();
+    });
+    
+    it('should handle empty middleware chain', async () => {
+        // This test creates a new Cortex instance to avoid middleware from other tests
+        const newCortex = new Cortex();
+        newCortex.listen(port + 1);
+        const newRequest = supertest(`http://localhost:${port + 1}`);
+        
+        newCortex.get('/no-middleware', () => ({ success: true }));
+        
+        const response = await newRequest.get('/no-middleware');
+        
+        expect(response.status).toBe(200);
+        expect(response.body).toEqual({ success: true });
+        
+        // Cleanup
+        newCortex.close();
+    });
 }); 

@@ -62,4 +62,48 @@ describe('Cortex', () => {
     
     expect(mockGetProtocol).toHaveBeenCalled();
   });
+
+  it('should add middleware', () => {
+    const middleware = jest.fn();
+    cortex.use(middleware);
+    const chain = cortex['router'].findAllMiddlewareByPath('/any-path');
+    expect(chain.middlewares).toContain(middleware);
+  });
+
+  it('should add middleware with path', () => {
+    const path = '/test';
+    const middleware = jest.fn();
+    cortex.use(path, middleware);
+    const chain = cortex['router'].findAllMiddlewareByPath(path);
+    expect(chain.middlewares).toContain(middleware);
+  });
+
+  it('should return empty array if no middleware', () => {
+    const chain = cortex['router'].findAllMiddlewareByPath('/any-path');
+    expect(chain.middlewares).toEqual([]);
+  });
+
+  it('should find one middleware by path', () => {
+    const middleware = jest.fn();
+    const middleware2 = jest.fn();
+    const middleware3 = jest.fn();
+    cortex.use('/test/', middleware);
+    cortex.use('/user/', middleware2);
+    cortex.use(middleware3);
+    const chain = cortex['router'].findAllMiddlewareByPath('/test/');
+    expect(chain.middlewares).toContain(middleware);
+    expect(chain.middlewares).not.toContain(middleware2);
+    expect(chain.middlewares).toContain(middleware3);
+
+    const chain2 = cortex['router'].findAllMiddlewareByPath('/user/');
+    expect(chain2.middlewares).not.toContain(middleware);
+    expect(chain2.middlewares).toContain(middleware2);
+    expect(chain2.middlewares).toContain(middleware3);
+
+    const chain3 = cortex['router'].findAllMiddlewareByPath('/');
+    expect(chain3.middlewares).not.toContain(middleware);
+    expect(chain3.middlewares).not.toContain(middleware2);
+    expect(chain3.middlewares).toContain(middleware3);
+  });
+  
 }); 

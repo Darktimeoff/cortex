@@ -5,6 +5,7 @@ import { ParserFactory, ParserFactoryInterface } from '@/parser';
 import { ContentTypeEnum } from '@/generic/enum/content-type.enum';
 import { Readable } from 'stream';
 import { Controller } from '@/controller';
+import { MiddlewareHandler } from '@/middleware';
 
 const mockRequest = (method: string = 'GET', url: string = '/test', contentType?: ContentTypeEnum, body?: string) => {
   const req = new Readable() as unknown as IncomingMessage;
@@ -465,5 +466,55 @@ describe('HttpProtocol', () => {
       expect(handlerSpy).toHaveBeenCalled();
       expect(handlerSpy.mock.calls[0][0].body).toBeNull();
     });
+  });
+
+  it('should handle request with middleware', async () => {
+    const handler = jest.fn();
+    const mockReq = mockRequest('GET', '/test');
+    const mockRes = mockResponse();
+    
+    const middlewareExecutionOrder: number[] = [];
+    const middleware1: MiddlewareHandler = async (_req, _res, next) => {
+      middlewareExecutionOrder.push(1);
+      await next();
+    };
+    const middleware2: MiddlewareHandler = async (_req, _res, next) => {
+      middlewareExecutionOrder.push(2);
+      await next();
+    };
+
+    const controller = new Controller();
+    controller.use(middleware1);
+    controller.use(middleware2);
+    controller.get('/test', handler);
+    registry.add(controller);
+    //@ts-expect-error
+    await httpProtocol.handleRequest(mockReq, mockRes);
+
+    expect(middlewareExecutionOrder).toEqual([1, 2]);
+    expect(handler).toHaveBeenCalled();
+  });
+
+  it('should modify request object in middleware and pass modified data to handler', async () => {
+    const handler = jest.fn();
+    const mockReq = mockRequest('GET', '/test');
+    const mockRes = mockResponse();
+    
+    const middleware: MiddlewareHandler = async (req, _res, next) => {
+      // @ts-ignore
+      req.modifiedData = 'modified by middleware';
+      await next();
+    };
+
+    const controller = new Controller();
+    controller.use(middleware);
+    controller.get('/test', handler);
+    registry.add(controller);
+    //@ts-expect-error
+    await httpProtocol.handleRequest(mockReq, mockRes);
+
+    expect(handler).toHaveBeenCalled();
+    // @ts-ignore
+    expect(handler.mock.calls[0][0].modifiedData).toBe('modified by middleware');
   });
 }); 
