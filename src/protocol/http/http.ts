@@ -9,14 +9,15 @@ import { ParserFactoryInterface } from "@/parser/parser-factory.interface";
 import { isContentType } from "@/generic/type-guard/is-content-type.type-guard";
 import { ParserResultType } from "@/parser/parser-factory.type";
 import { Response, ResponseInterface } from "@/response";
-
+import { LoggerInterface } from "@/logger";
 
 export class HttpProtocol implements HttpInterface {
     private server: Server;
 
     constructor(
-        protected readonly controller: ControllerRegistryInterface,
-        protected readonly parserFactory: ParserFactoryInterface
+        private readonly controller: ControllerRegistryInterface,
+        private readonly parserFactory: ParserFactoryInterface,
+        private readonly logger: LoggerInterface
     ) {
         this.server = createServer();
         this.server.on('request', this.handleRequest.bind(this));
@@ -24,15 +25,19 @@ export class HttpProtocol implements HttpInterface {
 
     listen(port: number, callback?: () => void): HttpInterface {
         this.server.listen(port, callback);
+        this.logger.info(`Server listening at http://[::1]:${port}`);
         return this;
     }
 
     close(): HttpInterface {
         this.server.close();
+        this.logger.info('Server closed');
         return this;
     }
 
     private async handleRequest(req: IncomingMessage, res: ServerResponse) {
+        this.logger.info(`Request received: ${req.method} ${req.url} ${req.headers['host']} ${req?.socket?.remoteAddress} ${req?.socket?.remotePort}`);
+
         const handler = this.getHandler(req);
         if (!handler) {
             this.handleNotFoundHandler(res);
@@ -45,6 +50,7 @@ export class HttpProtocol implements HttpInterface {
         const responseValue = await getPromisifiedValue(handler.handler(request, response));
         
         this.handleResponse(responseValue, res);
+        this.logger.info(`Response sent: ${res.statusCode} ${res.statusMessage} ${res.getHeader('Content-Type')}`);
     }
 
     private async executeMiddleware(path: string | undefined, req: RequestInterface, res: ResponseInterface) {
@@ -92,6 +98,7 @@ export class HttpProtocol implements HttpInterface {
     private handleNotFoundHandler(res: ServerResponse) {
         res.statusCode = 404;
         res.end("Not Found");
+        this.logger.error(`Handler not found: ${res.statusCode} ${res.statusMessage}`);
     }
 
     private getContentType(response: ControllerHandlerResponseType) {

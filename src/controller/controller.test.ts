@@ -1,3 +1,4 @@
+import { TransportEnum } from '@/logger';
 import { Controller } from './controller';
 import { HttpMethod } from '@/generic/enum/http-method.enum';
 
@@ -5,7 +6,7 @@ describe('Controller', () => {
   let controller: Controller;
 
   beforeEach(() => {
-    controller = new Controller();
+    controller = new Controller(undefined, TransportEnum.SILENT);
   });
 
   it('should register and find GET route', () => {
@@ -77,7 +78,7 @@ describe('Controller', () => {
   });
 
   it('should handle base path', () => {
-    const controller = new Controller('user');
+    const controller = new Controller('user', TransportEnum.SILENT);
     const handler = jest.fn();
     controller.get('', handler);
 

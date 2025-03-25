@@ -1,6 +1,7 @@
 import { ControllerRegistry } from './controller-registry';
 import { Controller } from '@/controller/controller';
 import { HttpMethod } from '@/generic/enum/http-method.enum';
+import { TransportEnum } from '@/logger';
 
 describe('ControllerRegistry', () => {
   let registry: ControllerRegistry;
@@ -8,7 +9,7 @@ describe('ControllerRegistry', () => {
 
   beforeEach(() => {
     registry = new ControllerRegistry();
-    controller = new Controller();
+    controller = new Controller(undefined, TransportEnum.SILENT);
     controller.get('/test', jest.fn());
   });
 
@@ -42,8 +43,8 @@ describe('ControllerRegistry', () => {
   });
 
   it('should find handler in multiple controllers', () => {
-    const controller1 = new Controller();
-    const controller2 = new Controller();
+    const controller1 = new Controller(undefined, TransportEnum.SILENT);
+    const controller2 = new Controller(undefined, TransportEnum.SILENT);
     const handler1 = jest.fn();
     const handler2 = jest.fn();
     
@@ -61,8 +62,8 @@ describe('ControllerRegistry', () => {
   });
 
   it('should find handler in multiple controllers with different base paths', () => {
-    const controller1 = new Controller('user');
-    const controller2 = new Controller('post');
+    const controller1 = new Controller('user', TransportEnum.SILENT);
+    const controller2 = new Controller('post', TransportEnum.SILENT);
     const handler1 = jest.fn();
     const handler2 = jest.fn();
 

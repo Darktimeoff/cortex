@@ -3,18 +3,21 @@ import { ProtocolEnum } from './enum/protocol.enum';
 import { ControllerRegistry } from '@/controller-registry';
 import { HttpProtocol } from './http/http';
 import { ParserFactory, ParserFactoryInterface } from '@/parser';
+import { Logger, LoggerInterface, TransportSilent } from '@/logger';
 
 describe('ProtocolFactory', () => {
   let registry: ControllerRegistry;
   let parserFactory: ParserFactoryInterface;
+  let logger: LoggerInterface;
 
   beforeEach(() => {
     registry = new ControllerRegistry();
     parserFactory = new ParserFactory();
+    logger = new Logger(undefined, new TransportSilent());
   });
 
   it('should create HTTP protocol instance', () => {
-    const protocol = ProtocolFactory.getProtocol(ProtocolEnum.HTTP, registry, parserFactory);
+    const protocol = ProtocolFactory.getProtocol(ProtocolEnum.HTTP, registry, parserFactory, logger);
     
     expect(protocol).toBeDefined();
     expect(protocol).toBeInstanceOf(HttpProtocol);
@@ -24,15 +27,15 @@ describe('ProtocolFactory', () => {
     const unknownProtocol = 'websocket' as ProtocolEnum;
     
     expect(() => {
-      ProtocolFactory.getProtocol(unknownProtocol, registry, parserFactory);
+      ProtocolFactory.getProtocol(unknownProtocol, registry, parserFactory, logger);
     }).toThrow('Protocol websocket not found');
   });
 
   it('should use the same protocol map for all invocations', () => {
     const spy = jest.spyOn(ProtocolFactory['protocols'], 'get');
     
-    ProtocolFactory.getProtocol(ProtocolEnum.HTTP, registry, parserFactory);
-    ProtocolFactory.getProtocol(ProtocolEnum.HTTP, registry, parserFactory);
+    ProtocolFactory.getProtocol(ProtocolEnum.HTTP, registry, parserFactory, logger);
+    ProtocolFactory.getProtocol(ProtocolEnum.HTTP, registry, parserFactory, logger);
     
     expect(spy).toHaveBeenCalledTimes(2);
     expect(spy).toHaveBeenCalledWith(ProtocolEnum.HTTP);
@@ -41,13 +44,13 @@ describe('ProtocolFactory', () => {
   });
 
   it('should pass registry to protocol constructor', () => {
-    const factorySpy = jest.fn().mockImplementation((reg, parserFactory) => new HttpProtocol(reg, parserFactory));
+    const factorySpy = jest.fn().mockImplementation((reg, parserFactory, logger) => new HttpProtocol(reg, parserFactory, logger));
     const getMapSpy = jest.spyOn(ProtocolFactory['protocols'], 'get')
       .mockReturnValue(factorySpy);
     
-    ProtocolFactory.getProtocol(ProtocolEnum.HTTP, registry, parserFactory);
+    ProtocolFactory.getProtocol(ProtocolEnum.HTTP, registry, parserFactory, logger);
     
-    expect(factorySpy).toHaveBeenCalledWith(registry, parserFactory);
+    expect(factorySpy).toHaveBeenCalledWith(registry, parserFactory, logger);
     
     getMapSpy.mockRestore();
   });

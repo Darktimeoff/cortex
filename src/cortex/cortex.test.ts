@@ -1,4 +1,6 @@
+import { TransportEnum } from '@/logger';
 import { Cortex } from './cortex';
+import { ProtocolEnum } from '@/protocol';
 
 // Мокируем модуль перед объявлением переменных
 jest.mock('@/protocol/protocol-factory', () => {
@@ -21,7 +23,7 @@ describe('Cortex', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    cortex = new Cortex();
+    cortex = new Cortex({protocol: ProtocolEnum.HTTP, logger: TransportEnum.SILENT});
   });
 
   it('should create an instance of Cortex', () => {

@@ -6,6 +6,7 @@ import { ContentTypeEnum } from '@/generic/enum/content-type.enum';
 import { Readable } from 'stream';
 import { Controller } from '@/controller';
 import { MiddlewareHandler } from '@/middleware';
+import { Logger, LoggerInterface, TransportEnum, TransportSilent } from '@/logger';
 
 const mockRequest = (method: string = 'GET', url: string = '/test', contentType?: ContentTypeEnum, body?: string) => {
   const req = new Readable() as unknown as IncomingMessage;
@@ -41,11 +42,13 @@ describe('HttpProtocol', () => {
   let httpProtocol: HttpInterface;
   let registry: ControllerRegistryInterface;
   let parserFactory: ParserFactoryInterface;
+  let logger: LoggerInterface
   
   beforeEach(() => {
     registry = new ControllerRegistry();
     parserFactory = new ParserFactory();
-    httpProtocol = new HttpProtocol(registry, parserFactory);
+    logger = new Logger(undefined, new TransportSilent());
+    httpProtocol = new HttpProtocol(registry, parserFactory, logger);
   });
   
   afterEach(() => {
@@ -273,7 +276,7 @@ describe('HttpProtocol', () => {
   
   describe('handleRequest with body', () => {
     it('should pass request body to handler', async () => {
-      const controller = new Controller();
+      const controller = new Controller(undefined, TransportEnum.SILENT);
       const handlerSpy = jest.fn().mockReturnValue('ok');
       
       controller.post('/test', handlerSpy);
@@ -294,7 +297,7 @@ describe('HttpProtocol', () => {
     });
     
     it('should pass TEXT content-type body to handler', async () => {
-      const controller = new Controller();
+      const controller = new Controller(undefined, TransportEnum.SILENT);
       const handlerSpy = jest.fn().mockReturnValue('ok');
       
       controller.post('/test', handlerSpy);
@@ -315,7 +318,7 @@ describe('HttpProtocol', () => {
     });
     
     it('should pass string value in JSON body to handler', async () => {
-      const controller = new Controller();
+      const controller = new Controller(undefined, TransportEnum.SILENT);
       const handlerSpy = jest.fn().mockReturnValue('ok');
       
       controller.post('/test-string', handlerSpy);
@@ -337,7 +340,7 @@ describe('HttpProtocol', () => {
     });
     
     it('should pass number value in JSON body to handler', async () => {
-      const controller = new Controller();
+      const controller = new Controller(undefined, TransportEnum.SILENT);
       const handlerSpy = jest.fn().mockReturnValue('ok');
       
       controller.post('/test-number', handlerSpy);
@@ -359,7 +362,7 @@ describe('HttpProtocol', () => {
     });
     
     it('should pass boolean value in JSON body to handler', async () => {
-      const controller = new Controller();
+      const controller = new Controller(undefined, TransportEnum.SILENT);
       const handlerSpy = jest.fn().mockReturnValue('ok');
       
       controller.post('/test-boolean', handlerSpy);
@@ -381,7 +384,7 @@ describe('HttpProtocol', () => {
     });
     
     it('should pass string value in TEXT body to handler', async () => {
-      const controller = new Controller();
+      const controller = new Controller(undefined, TransportEnum.SILENT);
       const handlerSpy = jest.fn().mockReturnValue('ok');
       
       controller.post('/test-text-string', handlerSpy);
@@ -403,7 +406,7 @@ describe('HttpProtocol', () => {
     });
     
     it('should pass number value in TEXT body to handler', async () => {
-      const controller = new Controller();
+      const controller = new Controller(undefined, TransportEnum.SILENT);
       const handlerSpy = jest.fn().mockReturnValue('ok');
       
       controller.post('/test-text-number', handlerSpy);
@@ -425,7 +428,7 @@ describe('HttpProtocol', () => {
     });
     
     it('should pass boolean value in TEXT body to handler', async () => {
-      const controller = new Controller();
+      const controller = new Controller(undefined, TransportEnum.SILENT);
       const handlerSpy = jest.fn().mockReturnValue('ok');
       
       controller.post('/test-text-boolean', handlerSpy);
@@ -447,7 +450,7 @@ describe('HttpProtocol', () => {
     });
     
     it('should pass null body when no content-type', async () => {
-      const controller = new Controller();
+      const controller = new Controller(undefined, TransportEnum.SILENT);
       const handlerSpy = jest.fn().mockReturnValue('ok');
       
       controller.post('/test', handlerSpy);
@@ -483,7 +486,7 @@ describe('HttpProtocol', () => {
       await next();
     };
 
-    const controller = new Controller();
+    const controller = new Controller(undefined, TransportEnum.SILENT);
     controller.use(middleware1);
     controller.use(middleware2);
     controller.get('/test', handler);
@@ -506,7 +509,7 @@ describe('HttpProtocol', () => {
       await next();
     };
 
-    const controller = new Controller();
+    const controller = new Controller(undefined, TransportEnum.SILENT);
     controller.use(middleware);
     controller.get('/test', handler);
     registry.add(controller);

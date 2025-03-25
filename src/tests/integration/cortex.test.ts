@@ -3,6 +3,8 @@ import { Cortex, CortexInterface } from '@/cortex';
 import { RequestInterface } from '@/request';
 import { Controller } from '@/controller';
 import TestAgent from 'supertest/lib/agent';
+import { ProtocolEnum } from '@/protocol';
+import { TransportEnum } from '@/logger';
 
 const port = 2000;
 
@@ -11,7 +13,7 @@ describe('Cortex Integration Tests', () => {
     let request: TestAgent;
 
     beforeAll(async () => {
-        cortex = new Cortex();
+        cortex = new Cortex({protocol: ProtocolEnum.HTTP, logger: TransportEnum.SILENT});
         cortex.listen(port);
         request = supertest(`http://localhost:${port}`);
     });
@@ -47,7 +49,7 @@ describe('Cortex Integration Tests', () => {
     });
 
     it('could add routes from other controllers', async () => {
-        const otherController = new Controller('other');
+        const otherController = new Controller('other', TransportEnum.SILENT);
         otherController.get('test/:id', (req: RequestInterface<{ id: string }>) => ({ success: true, id: req.params.id }));
         cortex.add(otherController);
         const response = await request.get('/other/test/123');
@@ -385,7 +387,7 @@ describe('Cortex Integration Tests', () => {
 
     it('should handle middleware for all routes with wildcard path', async () => {
         // Create new instance to avoid middleware from other tests
-        const newCortex = new Cortex();
+        const newCortex = new Cortex({protocol: ProtocolEnum.HTTP, logger: TransportEnum.SILENT});
         newCortex.listen(port + 3);
         const newRequest = supertest(`http://localhost:${port + 3}`);
         
@@ -416,7 +418,7 @@ describe('Cortex Integration Tests', () => {
 
     it('should handle middleware with path correctly', async () => {
         // Create new instance to avoid middleware from other tests
-        const newCortex = new Cortex();
+        const newCortex = new Cortex({protocol: ProtocolEnum.HTTP, logger: TransportEnum.SILENT});
         newCortex.listen(port + 2);
         const newRequest = supertest(`http://localhost:${port + 2}`);
         
@@ -458,8 +460,7 @@ describe('Cortex Integration Tests', () => {
     });
     
     it('should handle empty middleware chain', async () => {
-        // This test creates a new Cortex instance to avoid middleware from other tests
-        const newCortex = new Cortex();
+        const newCortex = new Cortex({protocol: ProtocolEnum.HTTP, logger: TransportEnum.SILENT});
         newCortex.listen(port + 1);
         const newRequest = supertest(`http://localhost:${port + 1}`);
         
