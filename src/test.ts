@@ -1,5 +1,7 @@
 import { Cortex } from "./cortex";
 import { RequestInterface } from "./request";
+import * as yup from "yup";
+import { adaptYupSchema } from "./validation";
 
 new Cortex()
     .use((_, __, next) => {
@@ -34,6 +36,14 @@ new Cortex()
             state: req.state,
             query: req.query
         }
+    }, {
+        query: adaptYupSchema(yup.object().shape({
+            name: yup.string().required(),
+            email: yup.string().email().required(),
+        })),
+        body: adaptYupSchema(yup.object().shape({
+            name: yup.string().required(),
+        }))
     })
     .get("/user/:id/post/:postId", (req: RequestInterface<{ id: string, postId: string }>) => ({
         message: "Hello World",

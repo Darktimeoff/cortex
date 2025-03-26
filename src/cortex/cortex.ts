@@ -8,6 +8,7 @@ import { ParserFactory, ParserFactoryInterface } from "@/parser";
 import { MiddlewareHandler } from "@/middleware";
 import { LoggerFactory, LoggerInterface } from "@/logger";
 import { DEFAULT_OPTIONS } from "./cortext.constant";
+import { ValidationRequestSchemaInterface } from "@/validation";
 
 export class Cortex implements CortexInterface {
     private protocol: ProtocolInterface;
@@ -25,23 +26,23 @@ export class Cortex implements CortexInterface {
         this.protocol = ProtocolFactory.getProtocol(protocol, this.registry, this.parserFactory, this.logger);
     }
 
-    get<T extends ControllerHandlerParamsType, TBody extends RequestBodyType, TRequest extends RequestInterface<T, TBody>>(path: string, cb: ControllerHandler<T, TBody, TRequest>): CortexInterface {
-        this.router.get(path, cb);
+    get<T extends ControllerHandlerParamsType, TBody extends RequestBodyType, TRequest extends RequestInterface<T, TBody>>(path: string, cb: ControllerHandler<T, TBody, TRequest>, schema?: ValidationRequestSchemaInterface): CortexInterface {
+        this.router.get(path, cb, schema);
         return this;
     }
 
-    post<T extends ControllerHandlerParamsType, TBody extends RequestBodyType, TRequest extends RequestInterface<T, TBody>>(path: string, cb: ControllerHandler<T, TBody, TRequest>): CortexInterface {
-        this.router.post(path, cb);
+    post<T extends ControllerHandlerParamsType, TBody extends RequestBodyType, TRequest extends RequestInterface<T, TBody>>(path: string, cb: ControllerHandler<T, TBody, TRequest>, schema?: ValidationRequestSchemaInterface): CortexInterface {
+        this.router.post(path, cb, schema);
         return this;
     }
 
-    put<T extends ControllerHandlerParamsType, TBody extends RequestBodyType, TRequest extends RequestInterface<T, TBody>>(path: string, cb: ControllerHandler<T, TBody, TRequest>): CortexInterface {
-        this.router.put(path, cb);
+    put<T extends ControllerHandlerParamsType, TBody extends RequestBodyType, TRequest extends RequestInterface<T, TBody>>(path: string, cb: ControllerHandler<T, TBody, TRequest>, schema?: ValidationRequestSchemaInterface): CortexInterface {
+        this.router.put(path, cb, schema);
         return this;
     }
 
-    delete<T extends ControllerHandlerParamsType, TBody extends RequestBodyType, TRequest extends RequestInterface<T, TBody>>(path: string, cb: ControllerHandler<T, TBody, TRequest>): CortexInterface {
-        this.router.delete(path, cb);
+    delete<T extends ControllerHandlerParamsType, TBody extends RequestBodyType, TRequest extends RequestInterface<T, TBody>>(path: string, cb: ControllerHandler<T, TBody, TRequest>, schema?: ValidationRequestSchemaInterface): CortexInterface {
+        this.router.delete(path, cb, schema);
         return this;
     }
 

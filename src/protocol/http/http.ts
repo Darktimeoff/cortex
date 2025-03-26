@@ -10,6 +10,7 @@ import { isContentType } from "@/generic/type-guard/is-content-type.type-guard";
 import { ParserResultType } from "@/parser/parser-factory.type";
 import { Response, ResponseInterface } from "@/response";
 import { LoggerInterface } from "@/logger";
+import { ValidationError, ValidationRequest } from "@/validation";
 
 export class HttpProtocol implements HttpInterface {
     private server: Server;
@@ -45,12 +46,44 @@ export class HttpProtocol implements HttpInterface {
         }
 
         const { request, response } = await this.getReqAndRes(handler.params, req, res);
+
+        const validationResult = await this.validateRequest(handler.schema, request, res);
+
+        if(validationResult) {
+            this.handleResponse(validationResult, res);
+            return;
+        }
+
         await this.executeMiddleware(req.url, request, response);
         
         const responseValue = await getPromisifiedValue(handler.handler(request, response));
         
         this.handleResponse(responseValue, res);
-        this.logger.info(`Response sent: ${res.statusCode} ${res.statusMessage} ${res.getHeader('Content-Type')}`);
+    }
+
+    private async validateRequest(schema: ControllerFindResultInterface['schema'], req: RequestInterface, res: ServerResponse) {
+        if (!schema) {
+            return;
+        }
+
+        const validationRequest = new ValidationRequest(req, schema);
+
+        try {
+            return await validationRequest.validate();
+        } catch (error) {
+            if (error instanceof ValidationError) {
+                this.logger.error(`Validation error ${JSON.stringify(error.errors)}`);
+                res.statusCode = 400;
+
+                return {
+                    errors: error.errors
+                };
+            }
+
+            this.logger.error(`Validation error: ${error}`);
+            res.statusCode = 500;
+            return "Internal Server Error";
+        }
     }
 
     private async executeMiddleware(path: string | undefined, req: RequestInterface, res: ResponseInterface) {
@@ -82,6 +115,7 @@ export class HttpProtocol implements HttpInterface {
         res.setHeader('Content-Type', contentType);
         res.setHeader('Powered-By', 'Cortex');
         res.end(this.convertResponseToBody(response));
+        this.logger.info(`Response sent: ${res.statusCode} ${res.statusMessage} ${res.getHeader('Content-Type')}`);
     }
 
     private getHandler(req: IncomingMessage): ControllerFindResultInterface | null {

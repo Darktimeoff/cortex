@@ -8,11 +8,13 @@ import { MiddlewareRegistry } from "@/middleware";
 import { RequestInterface } from "@/request";
 import { LoggerFactory, LoggerInterface, TransportEnum } from "@/logger";
 import { DEFAULT_OPTIONS } from "@/cortex";
+import { ValidationRequestSchemaInterface } from "@/validation";
 
 export class Controller implements ControllerInterface {
     private readonly router: Memoirist<ControllerHandler<ControllerHandlerParamsType, RequestBodyType>>
     private readonly middlewareRegistry: MiddlewareRegistryInterface;
     private readonly logger: LoggerInterface;
+    private readonly handlerSchema: Map<ControllerHandler<ControllerHandlerParamsType, RequestBodyType>, ValidationRequestSchemaInterface> = new Map();
 
     constructor(
         private readonly basePath?: string,
@@ -32,7 +34,8 @@ export class Controller implements ControllerInterface {
 
         return {
             handler: result.store,
-            params: result.params
+            params: result.params,
+            schema: this.handlerSchema.get(result.store)
         };
     }
 
@@ -46,29 +49,32 @@ export class Controller implements ControllerInterface {
         return this.middlewareRegistry.getByPath(path);
     }
 
-    get<T extends ControllerHandlerParamsType, TBody extends RequestBodyType, TRequest extends RequestInterface<T, TBody>>(path: string, cb: ControllerHandler<T, TBody, TRequest>): ControllerInterface {
-        this.addRoute(path, HttpMethod.GET, cb);
+    get<T extends ControllerHandlerParamsType, TBody extends RequestBodyType, TRequest extends RequestInterface<T, TBody>>(path: string, cb: ControllerHandler<T, TBody, TRequest>, schema?: ValidationRequestSchemaInterface): ControllerInterface {
+        this.addRoute(path, HttpMethod.GET, cb, schema);
         return this;
     }
 
-    post<T extends ControllerHandlerParamsType, TBody extends RequestBodyType, TRequest extends RequestInterface<T, TBody>>(path: string, cb: ControllerHandler<T, TBody, TRequest>): ControllerInterface {
-        this.addRoute(path, HttpMethod.POST, cb);
+    post<T extends ControllerHandlerParamsType, TBody extends RequestBodyType, TRequest extends RequestInterface<T, TBody>>(path: string, cb: ControllerHandler<T, TBody, TRequest>, schema?: ValidationRequestSchemaInterface): ControllerInterface {
+        this.addRoute(path, HttpMethod.POST, cb, schema);
         return this;
     }
 
-    put<T extends ControllerHandlerParamsType, TBody extends RequestBodyType, TRequest extends RequestInterface<T, TBody>>(path: string, cb: ControllerHandler<T, TBody, TRequest>): ControllerInterface {
-        this.addRoute(path, HttpMethod.PUT, cb);
+    put<T extends ControllerHandlerParamsType, TBody extends RequestBodyType, TRequest extends RequestInterface<T, TBody>>(path: string, cb: ControllerHandler<T, TBody, TRequest>, schema?: ValidationRequestSchemaInterface): ControllerInterface {
+        this.addRoute(path, HttpMethod.PUT, cb, schema);
         return this;
     }
 
-    delete<T extends ControllerHandlerParamsType, TBody extends RequestBodyType, TRequest extends RequestInterface<T, TBody>>(path: string, cb: ControllerHandler<T, TBody, TRequest>): ControllerInterface {
-        this.addRoute(path, HttpMethod.DELETE, cb);
+    delete<T extends ControllerHandlerParamsType, TBody extends RequestBodyType, TRequest extends RequestInterface<T, TBody>>(path: string, cb: ControllerHandler<T, TBody, TRequest>, schema?: ValidationRequestSchemaInterface): ControllerInterface {
+        this.addRoute(path, HttpMethod.DELETE, cb, schema);
         return this;
     }
 
-    private addRoute<T extends ControllerHandlerParamsType, TBody extends RequestBodyType, TRequest extends RequestInterface<T, TBody>>(path: string, method: HttpMethod, handler: ControllerHandler<T, TBody, TRequest>): void {
+    private addRoute<T extends ControllerHandlerParamsType, TBody extends RequestBodyType, TRequest extends RequestInterface<T, TBody>>(path: string, method: HttpMethod, handler: ControllerHandler<T, TBody, TRequest>, schema?: ValidationRequestSchemaInterface): void {
         this.router.add(method, this.getPath(path), handler as ControllerHandler<Record<string, unknown>>);
         this.logger.info(`Handler ${method} ${path} registered`);
+        if (schema) {
+            this.handlerSchema.set(handler as ControllerHandler<Record<string, unknown>>, schema);
+        }
     }
 
     private getPath(path: string): string {
