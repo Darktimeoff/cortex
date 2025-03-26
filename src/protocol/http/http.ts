@@ -85,12 +85,14 @@ export class HttpProtocol implements HttpInterface {
     }
 
     private getHandler(req: IncomingMessage): ControllerFindResultInterface | null {
-        const path = req.url;
+        let path = req.url;
         const method = req.method;
 
         if (!path || !isHttpMethod(method)) {
             return null;
         }
+        const url = new URL(path, `http://localhost`);
+        path = url.pathname;
 
         return this.controller.find(path, method);
     }

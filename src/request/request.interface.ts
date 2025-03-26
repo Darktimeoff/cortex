@@ -6,4 +6,5 @@ export interface RequestInterface<T extends ControllerHandlerParamsType = Contro
     params: T;
     body: TBody;
     request: IncomingMessage;
+    query: Record<string, string | string[]>;
 }

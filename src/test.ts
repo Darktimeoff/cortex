@@ -22,19 +22,23 @@ new Cortex()
         console.log("Middleware 4");
         return next();
     })
-    .get("/", (req: RequestInterface & { state: { message: string, userId: number } }) => ({
-        message: "Hello World",
-        empty: null,
-        undefined: undefined,
-        number: 1,
-        string: "string",
-        boolean: true,
-        params: req.params,
-        state: req.state
-    }))
+    .get("/", (req: RequestInterface & { state: { message: string, userId: number } }) => {
+        return {
+            message: "Hello World",
+            empty: null,
+            undefined: undefined,
+            number: 1,
+            string: "string",
+            boolean: true,
+            params: req.params,
+            state: req.state,
+            query: req.query
+        }
+    })
     .get("/user/:id/post/:postId", (req: RequestInterface<{ id: string, postId: string }>) => ({
         message: "Hello World",
-        params: req.params
+        params: req.params,
+        query: req.query
     }))
     .post("user", (req: RequestInterface<{}, { name: string, email: string }> & { state: { userId: number, message: string } }) => ({
         message: "Create User",
@@ -42,6 +46,4 @@ new Cortex()
         bodyType: typeof req.body,
         state: req.state
     }))
-    .listen(3000, () => {
-        console.log("http://localhost:3000");
-    });
+    .listen(3000);

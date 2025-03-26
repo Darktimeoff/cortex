@@ -2,6 +2,7 @@ import { ControllerHandlerParamsType } from "@/controller";
 import { RequestInterface } from "./request.interface";
 import { IncomingMessage } from "http";
 import { ParserResultType } from "@/parser/parser-factory.type";
+import { urlSearchToObject } from "@/generic/util/url-search-to-object.util";
 
 export class Request implements RequestInterface<ControllerHandlerParamsType, ParserResultType | null> {
     constructor(
@@ -20,5 +21,10 @@ export class Request implements RequestInterface<ControllerHandlerParamsType, Pa
 
     get body(): ParserResultType | null {
         return this._body;
+    }
+
+    get query(): Record<string, string | string[]> {
+        const url = new URL(this._request.url || '/', `http://localhost`);
+        return urlSearchToObject(url.searchParams);
     }
 }

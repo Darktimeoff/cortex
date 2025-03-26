@@ -18,7 +18,7 @@ export class Controller implements ControllerInterface {
         private readonly basePath?: string,
         logger: TransportEnum = DEFAULT_OPTIONS.logger
     ) {
-        this.router = new Memoirist<ControllerHandler<ControllerHandlerParamsType, RequestBodyType>>();
+        this.router = new Memoirist<ControllerHandler<ControllerHandlerParamsType, RequestBodyType>>({lazy: true});
         this.middlewareRegistry = new MiddlewareRegistry();
         this.logger = LoggerFactory.createLogger(logger);
     }

@@ -62,4 +62,83 @@ describe('Request', () => {
     //@ts-expect-error
     expect(request.body?.role).toBe('admin');
   });
+
+  it('should parse query parameters from URL', () => {
+    mockIncomingMessage.url = '/test?name=John&age=30';
+    const request = new Request({}, mockIncomingMessage, null);
+    
+    expect(request.query).toEqual({
+      name: 'John',
+      age: '30'
+    });
+  });
+
+  it('should handle multiple query parameters with the same name', () => {
+    mockIncomingMessage.url = '/test?tag=javascript&tag=typescript&tag=nodejs';
+    const request = new Request({}, mockIncomingMessage, null);
+    
+    expect(request.query).toEqual({
+      tag: ['javascript', 'typescript', 'nodejs']
+    });
+  });
+
+  it('should handle empty query parameters', () => {
+    mockIncomingMessage.url = '/test?empty=&name=John';
+    const request = new Request({}, mockIncomingMessage, null);
+    
+    expect(request.query).toEqual({
+      empty: '',
+      name: 'John'
+    });
+  });
+
+  it('should handle complex query strings', () => {
+    mockIncomingMessage.url = '/test?filter[name]=John&filter[age]=30&sort=asc';
+    const request = new Request({}, mockIncomingMessage, null);
+    
+    expect(request.query).toEqual({
+      'filter[name]': 'John',
+      'filter[age]': '30',
+      'sort': 'asc'
+    });
+  });
+
+  it('should return empty object for URL without query parameters', () => {
+    mockIncomingMessage.url = '/test';
+    const request = new Request({}, mockIncomingMessage, null);
+    
+    expect(request.query).toEqual({});
+  });
+
+  it('should handle URL with only query parameters', () => {
+    mockIncomingMessage.url = '?page=1&limit=10';
+    const request = new Request({}, mockIncomingMessage, null);
+    
+    expect(request.query).toEqual({
+      page: '1',
+      limit: '10'
+    });
+  });
+
+  it('should handle undefined URL by using default fallback path', () => {
+    mockIncomingMessage.url = undefined;
+    const request = new Request({}, mockIncomingMessage, null);
+    
+    expect(request.query).toEqual({});
+  });
+
+  it('should handle null URL by using default fallback path', () => {
+    //@ts-expect-error
+    mockIncomingMessage.url = null;
+    const request = new Request({}, mockIncomingMessage, null);
+    
+    expect(request.query).toEqual({});
+  });
+
+  it('should handle empty string URL', () => {
+    mockIncomingMessage.url = '';
+    const request = new Request({}, mockIncomingMessage, null);
+    
+    expect(request.query).toEqual({});
+  });
 }); 

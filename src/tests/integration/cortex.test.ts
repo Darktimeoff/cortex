@@ -474,4 +474,88 @@ describe('Cortex Integration Tests', () => {
         // Cleanup
         newCortex.close();
     });
+
+    it('should handle URL with query parameters', async () => {
+        cortex.get('/api/search', (req: RequestInterface) => {
+            return { 
+                success: true, 
+                query: req.query
+            };
+        });
+        
+        const response = await request.get('/api/search?q=test&page=1&limit=10');
+        
+        expect(response.status).toBe(200);
+        expect(response.body).toEqual({ 
+            success: true, 
+            query: {
+                q: 'test',
+                page: '1',
+                limit: '10'
+            }
+        });
+    });
+    
+    it('should handle multiple query parameters with the same name', async () => {
+        cortex.get('/api/filter', (req: RequestInterface) => {
+            return { 
+                success: true, 
+                filters: req.query.filter
+            };
+        });
+        
+        const response = await request.get('/api/filter?filter=red&filter=blue&filter=green');
+        
+        expect(response.status).toBe(200);
+        expect(response.body).toEqual({ 
+            success: true, 
+            filters: ['red', 'blue', 'green']
+        });
+    });
+    
+    it('should handle complex query parameters', async () => {
+        cortex.get('/api/complex-query', (req: RequestInterface) => {
+            return { 
+                success: true, 
+                query: req.query
+            };
+        });
+        
+        const response = await request.get('/api/complex-query?filter[name]=John&filter[age]=30&sort=asc&page=1');
+        
+        expect(response.status).toBe(200);
+        expect(response.body).toEqual({ 
+            success: true, 
+            query: {
+                'filter[name]': 'John',
+                'filter[age]': '30',
+                sort: 'asc',
+                page: '1'
+            }
+        });
+    });
+    
+    it('should combine route parameters with query parameters', async () => {
+        cortex.get('/api/users/:userId/posts/:postId', (req: RequestInterface<{userId: string, postId: string}>) => {
+            return { 
+                success: true, 
+                userId: req.params.userId,
+                postId: req.params.postId,
+                query: req.query
+            };
+        });
+        
+        const response = await request.get('/api/users/123/posts/456?include=comments&sort=newest');
+        
+        expect(response.status).toBe(200);
+        expect(response.body).toEqual({ 
+            success: true, 
+            userId: '123',
+            postId: '456',
+            query: {
+                include: 'comments',
+                sort: 'newest'
+            }
+        });
+    });
 }); 
