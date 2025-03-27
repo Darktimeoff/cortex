@@ -11,17 +11,19 @@ import { ParserResultType } from "@/parser/parser-factory.type";
 import { Response, ResponseInterface } from "@/response";
 import { LoggerInterface } from "@/logger";
 import { ValidationError, ValidationRequest, ValidationRequestInterface, ValidationResponse } from "@/validation";
+import { MiddlewareExceptionHandlerInterface } from "@/middleware";
 
 export class HttpProtocol implements HttpInterface {
     private server: Server;
+    private exceptionHandler: MiddlewareExceptionHandlerInterface | null = null;
 
     constructor(
         private readonly controller: ControllerRegistryInterface,
         private readonly parserFactory: ParserFactoryInterface,
-        private readonly logger: LoggerInterface
+        private readonly logger: LoggerInterface,
     ) {
         this.server = createServer();
-        this.server.on('request', this.handleRequest.bind(this));
+        this.server.on('request', this.handleException.bind(this));
     }
 
     listen(port: number, callback?: () => void): HttpInterface {
@@ -34,6 +36,26 @@ export class HttpProtocol implements HttpInterface {
         this.server.close();
         this.logger.info('Server closed');
         return this;
+    }
+
+    useExceptionFilter(cb: MiddlewareExceptionHandlerInterface): HttpInterface {
+        this.exceptionHandler = cb;
+        return this;
+    }
+
+    private async handleException(req: IncomingMessage, res: ServerResponse) {
+        try {
+            return await this.handleRequest(req, res);
+        } catch (error) {
+            if(!this.exceptionHandler) {
+                throw error;
+            }
+            
+            this.logger.error(`Exception: ${error}`);
+            const result = await this.exceptionHandler(error as Error, req, res);
+            this.logger.error(`Exception handled: ${JSON.stringify(result)}`);
+            this.handleResponse(result, res);
+        }
     }
 
     private async handleRequest(req: IncomingMessage, res: ServerResponse) {

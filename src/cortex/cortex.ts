@@ -5,7 +5,7 @@ import { ControllerRegistry, ControllerRegistryInterface } from "@/controller-re
 import { ControllerHandler } from "@/controller";       
 import { RequestBodyType, RequestInterface } from "@/request";
 import { ParserFactory, ParserFactoryInterface } from "@/parser";
-import { MiddlewareHandler } from "@/middleware";
+import { MiddlewareExceptionHandlerInterface, MiddlewareHandler } from "@/middleware";
 import { LoggerFactory, LoggerInterface } from "@/logger";
 import { DEFAULT_OPTIONS } from "./cortext.constant";
 import { ValidationRequestSchemaInterface } from "@/validation";
@@ -15,7 +15,7 @@ export class Cortex implements CortexInterface {
     private router: ControllerInterface;
     private registry: ControllerRegistryInterface;
     private parserFactory: ParserFactoryInterface;
-    private logger: LoggerInterface
+    private logger: LoggerInterface;
 
     constructor({protocol, logger}: CortexOptionsInterface = DEFAULT_OPTIONS) {
         this.logger = LoggerFactory.createLogger(logger);
@@ -53,6 +53,11 @@ export class Cortex implements CortexInterface {
 
     use<D extends RequestInterface = RequestInterface>(pathOrHandler: string | MiddlewareHandler<D>, handler?: MiddlewareHandler<D>): CortexInterface {
         this.router.use(pathOrHandler, handler);
+        return this;
+    }
+
+    useExceptionFilter(cb: MiddlewareExceptionHandlerInterface): CortexInterface {
+        this.protocol.useExceptionFilter(cb);
         return this;
     }
 
