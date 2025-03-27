@@ -10,7 +10,7 @@ import { isContentType } from "@/generic/type-guard/is-content-type.type-guard";
 import { ParserResultType } from "@/parser/parser-factory.type";
 import { Response, ResponseInterface } from "@/response";
 import { LoggerInterface } from "@/logger";
-import { ValidationError, ValidationRequest } from "@/validation";
+import { ValidationError, ValidationRequest, ValidationRequestInterface, ValidationResponse } from "@/validation";
 
 export class HttpProtocol implements HttpInterface {
     private server: Server;
@@ -57,7 +57,14 @@ export class HttpProtocol implements HttpInterface {
         await this.executeMiddleware(req.url, request, response);
         
         const responseValue = await getPromisifiedValue(handler.handler(request, response));
-        
+
+        const validationResponseResult = await this.validateResponse(responseValue, handler.schema, res);
+
+        if(validationResponseResult) {
+            this.handleResponse(validationResponseResult, res);
+            return;
+        }
+
         this.handleResponse(responseValue, res);
     }
 
@@ -68,8 +75,22 @@ export class HttpProtocol implements HttpInterface {
 
         const validationRequest = new ValidationRequest(req, schema);
 
+        return await this.validate(validationRequest, res);
+    }
+
+    private async validateResponse(data: ControllerHandlerResponseType, schema: ControllerFindResultInterface['schema'], res: ServerResponse) {
+        if (!schema) {
+            return;
+        }
+
+        const validationResponse = new ValidationResponse(data, schema);
+
+        return await this.validate(validationResponse, res);
+    }
+
+    private async validate(validate: ValidationRequestInterface, res: ServerResponse) {
         try {
-            return await validationRequest.validate();
+            return await validate.validate();
         } catch (error) {
             if (error instanceof ValidationError) {
                 this.logger.error(`Validation error ${JSON.stringify(error.errors)}`);

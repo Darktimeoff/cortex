@@ -1,4 +1,4 @@
-import { ValidationRequest } from './validation';
+import { ValidationRequest } from './validation-request';
 import { ValidationError } from './validation.error';
 import { ValidationSchemaInterface } from './validation.interface';
 import { RequestInterface } from '@/request';

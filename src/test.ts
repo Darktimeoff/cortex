@@ -43,6 +43,13 @@ new Cortex()
         })),
         body: adaptYupSchema(yup.object().shape({
             name: yup.string().required(),
+        })),
+        response: adaptYupSchema(yup.object().shape({
+            message: yup.string().required(),
+            empty: yup.string().nullable(),
+            undefined: yup.string().nullable(),
+            number: yup.number().required(),
+            string: yup.string().required(),
         }))
     })
     .get("/user/:id/post/:postId", (req: RequestInterface<{ id: string, postId: string }>) => ({

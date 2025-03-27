@@ -10,8 +10,9 @@ export interface ValidationRequestSchemaInterface {
     params?: ValidationSchemaInterface;
     body?: ValidationSchemaInterface;
     query?: ValidationSchemaInterface;
+    response?: ValidationSchemaInterface;
 }
 
 export interface ValidationRequestInterface {
-    validate(schema: ValidationRequestSchemaInterface): Promise<void>;
+    validate(): Promise<void>;
 }

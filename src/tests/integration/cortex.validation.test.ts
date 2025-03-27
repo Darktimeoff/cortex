@@ -201,4 +201,146 @@ describe('Cortex Validation Integration Tests', () => {
         expect(response.body.errors[0].message).toBe('Name is required');
         expect(response.body.errors[1].message).toBe('Age must be positive');
     });
+    
+    it('should validate response with Yup schema', async () => {
+        const responseSchema = adaptYupSchema(yup.object().shape({
+            success: yup.boolean().required().equals([true]),
+            data: yup.object().shape({
+                id: yup.number().required().positive(),
+                name: yup.string().required().min(3),
+                createdAt: yup.date().required()
+            })
+        }));
+        
+
+        cortex.get('/users/valid-response', async () => {
+            return { 
+                success: true, 
+                data: {
+                    id: 1,
+                    name: 'John Doe',
+                    createdAt: new Date()
+                }
+            };
+        }, { response: responseSchema });
+        
+        const validResponse = await request.get('/users/valid-response');
+    
+        expect(validResponse.status).toBe(200);
+        expect(validResponse.body).toHaveProperty('success');
+        expect(validResponse.body).toHaveProperty('data');
+        expect(validResponse.body.data).toHaveProperty('id');
+        expect(validResponse.body.data).toHaveProperty('name');
+        expect(validResponse.body.data).toHaveProperty('createdAt');
+        
+        cortex.get('/users/invalid-response', async () => {
+            return { 
+                success: true, 
+                data: {
+                    id: -1,
+                    name: 'Jo',
+                    createdAt: new Date()
+                }
+            };
+        }, { response: responseSchema });
+        
+        const invalidResponse = await request.get('/users/invalid-response');
+        expect(invalidResponse.status).toBe(400);
+        expect(invalidResponse.body).toHaveProperty('errors');
+        expect(invalidResponse.body.errors.length).toBeGreaterThanOrEqual(1);
+    });
+    
+    it('should validate response with custom error messages', async () => {
+        const responseSchema = adaptYupSchema(yup.object().shape({
+            success: yup.boolean().required().equals([true], 'Response must be successful'),
+            data: yup.object().shape({
+                id: yup.number().required('ID is required').positive('ID must be positive'),
+                status: yup.string().required('Status is required').oneOf(['active', 'inactive'], 'Status must be either active or inactive')
+            })
+        }));
+        
+        cortex.get('/users/custom-response-errors', async () => {
+            return { 
+                success: true, 
+                data: {
+                    id: -5,
+                    status: 'pending'
+                }
+            };
+        }, { response: responseSchema });
+        
+        const response = await request.get('/users/custom-response-errors');
+        expect(response.status).toBe(400);
+        expect(response.body).toHaveProperty('errors');
+        expect(response.body.errors.length).toBeGreaterThanOrEqual(2);
+        
+        //@ts-expect-error
+        const errorMessages = response.body.errors.map((err: unknown) => err?.message);
+        expect(errorMessages).toContain('ID must be positive');
+        expect(errorMessages).toContain('Status must be either active or inactive');
+    });
+    
+    it('should validate both request and response', async () => {
+        const requestSchema = adaptYupSchema(yup.object().shape({
+            name: yup.string().required(),
+            age: yup.number().required().positive()
+        }));
+        
+        const responseSchema = adaptYupSchema(yup.object().shape({
+            success: yup.boolean().required(),
+            data: yup.object().shape({
+                id: yup.number().required().positive(),
+                name: yup.string().required(),
+                age: yup.number().required().positive(),
+                registered: yup.boolean().required()
+            })
+        }));
+        
+        cortex.post('/users/validate-both', async (req: RequestInterface) => {
+            const body = req.body as { name: string; age: number };
+            return { 
+                success: true, 
+                data: {
+                    id: 1,
+                    name: body.name,
+                    age: body.age,
+                    registered: true
+                }
+            };
+        }, { 
+            body: requestSchema,
+            response: responseSchema 
+        });
+        
+        const validData = {
+            name: 'John',
+            age: 30
+        };
+        
+        const validResponse = await request
+            .post('/users/validate-both')
+            .set('Content-Type', 'application/json')
+            .send(validData);
+            
+        expect(validResponse.status).toBe(200);
+        expect(validResponse.body).toHaveProperty('success');
+        expect(validResponse.body).toHaveProperty('data');
+        expect(validResponse.body.data).toHaveProperty('id');
+        expect(validResponse.body.data).toHaveProperty('name');
+        expect(validResponse.body.data).toHaveProperty('age');
+        expect(validResponse.body.data).toHaveProperty('registered');
+        
+        const invalidData = {
+            name: 'John',
+            age: -5
+        };
+        
+        const invalidRequestResponse = await request
+            .post('/users/validate-both')
+            .set('Content-Type', 'application/json')
+            .send(invalidData);
+            
+        expect(invalidRequestResponse.status).toBe(400);
+        expect(invalidRequestResponse.body).toHaveProperty('errors');
+    });
 }); 
