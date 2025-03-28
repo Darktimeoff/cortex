@@ -12,11 +12,11 @@ export class ParserFactory implements ParserFactoryInterface<ParserResultType> {
         [ContentTypeEnum.TEXT, new ParserTextFactory()],
     ]);
 
-    parse(contentType: ContentTypeEnum, req: IncomingMessage): Promise<ParserResultType> {
+    async parse(contentType: ContentTypeEnum, req: IncomingMessage): Promise<ParserResultType> {
         const parser = this.parsers.get(contentType);
         if (!parser) {
             throw new ParserNotFoundError(`No parser found for content type: ${contentType}`, contentType);
         }
-        return parser.parse(contentType, req);
+        return await parser.parse(contentType, req);
     }
 }

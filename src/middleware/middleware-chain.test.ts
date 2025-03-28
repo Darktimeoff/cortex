@@ -54,7 +54,7 @@ describe('MiddlewareChain', () => {
     });
 
     it('should handle empty middleware chain', async () => {
-        await expect(chain.execute(mockReq, mockRes)).resolves.not.toThrow();
+        await expect(chain.execute(mockReq, mockRes)).resolves.toBeUndefined();
     });
 
     it('should handle undefined middleware return', async () => {

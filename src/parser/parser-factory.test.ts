@@ -40,9 +40,8 @@ describe('ParserFactory', () => {
   });
 
   it('should throw ParserNotFoundError for unsupported content type', async () => {
-    await expect(async () => {
-      await parserFactory.parse(ContentTypeEnum.FORM_DATA, mockRequest);
-    }).rejects.toThrow(ParserNotFoundError);
+    const parser = parserFactory.parse(ContentTypeEnum.FORM_DATA, mockRequest)
+    await expect(parser).rejects.toThrow(ParserNotFoundError);
   });
 
   it('should throw error with correct content type property', async () => {
