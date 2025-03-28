@@ -33,7 +33,7 @@ describe('ValidationResponse', () => {
   it('should validate response schema successfully', async () => {
     mockSchema.response?.validate.mockResolvedValue({ errors: [] });
 
-    await expect(validationResponse.validate()).resolves.not.toThrow();
+    await expect(validationResponse.validate()).resolves.toBeUndefined();
     expect(mockSchema.response?.validate).toHaveBeenCalledWith(mockResponseBody);
   });
 
@@ -53,20 +53,20 @@ describe('ValidationResponse', () => {
     
     mockSchema.response?.validate.mockResolvedValue({ errors: [] });
 
-    await expect(validationResponse.validate()).resolves.not.toThrow();
+    await expect(validationResponse.validate()).resolves.toBeUndefined();
     expect(mockSchema.response?.validate).toHaveBeenCalledWith(emptyBody);
   });
 
   it('should handle null response schema', async () => {
     validationResponse = new ValidationResponse(mockResponseBody, {});
     
-    await expect(validationResponse.validate()).resolves.not.toThrow();
+    await expect(validationResponse.validate()).resolves.toBeUndefined();
   });
 
   it('should handle undefined response schema', async () => {
     validationResponse = new ValidationResponse(mockResponseBody, { response: undefined });
     
-    await expect(validationResponse.validate()).resolves.not.toThrow();
+    await expect(validationResponse.validate()).resolves.toBeUndefined();
   });
 
   it('should handle validation errors from schema', async () => {
@@ -106,7 +106,7 @@ describe('ValidationResponse', () => {
     validationResponse = new ValidationResponse(complexResponse, mockSchema);
     mockSchema.response?.validate.mockResolvedValue({ errors: [] });
 
-    await expect(validationResponse.validate()).resolves.not.toThrow();
+    await expect(validationResponse.validate()).resolves.toBeUndefined();
     expect(mockSchema.response?.validate).toHaveBeenCalledWith(complexResponse);
   });
 }); 
