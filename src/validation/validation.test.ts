@@ -41,7 +41,7 @@ describe('ValidationRequest', () => {
     mockSchema.body?.validate.mockResolvedValue({ errors: [] });
     mockSchema.query?.validate.mockResolvedValue({ errors: [] });
 
-    await expect(validationRequest.validate()).resolves.not.toThrow();
+    await expect(validationRequest.validate()).resolves.toBeUndefined();
   });
 
   it('should throw ValidationError when params validation fails', async () => {
@@ -77,7 +77,7 @@ describe('ValidationRequest', () => {
     mockSchema.body?.validate.mockResolvedValue({ errors: [] });
     mockSchema.query?.validate.mockResolvedValue({ errors: [] });
 
-    await expect(validationRequest.validate()).resolves.not.toThrow();
+    await expect(validationRequest.validate()).resolves.toBeUndefined();
   });
 
   it('should handle validation errors from schema', async () => {
