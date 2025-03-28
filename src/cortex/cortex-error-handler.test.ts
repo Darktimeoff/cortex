@@ -3,31 +3,27 @@ import { ProtocolEnum } from '@/protocol';
 import { TransportEnum } from '@/logger';
 import { ProtocolInterface } from '@/protocol';
 
-jest.mock('@/protocol/protocol-factory', () => {
-  const mockUseExceptionFilter = jest.fn().mockReturnThis();
-  const mockListen = jest.fn().mockReturnThis();
-  const mockClose = jest.fn().mockReturnThis();
-  
-  return {
-    ProtocolFactory: {
-      getProtocol: jest.fn().mockReturnValue({
-        listen: mockListen,
-        close: mockClose,
-        useExceptionFilter: mockUseExceptionFilter
-      })
-    }
-  };
-});
+const mockUseExceptionFilter = jest.fn(() => mockProtocol);
+const mockListen = jest.fn(() => mockProtocol);
+const mockClose = jest.fn(() => mockProtocol);
 
-const mockProtocolFactory = jest.requireMock('@/protocol/protocol-factory').ProtocolFactory;
-const mockProtocol = mockProtocolFactory.getProtocol();
+const mockProtocol: ProtocolInterface = {
+  listen: mockListen,
+  close: mockClose,
+  useExceptionFilter: mockUseExceptionFilter
+};
+
 
 describe('Cortex Error Handler', () => {
   let cortex: Cortex;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    mockListen.mockReset();
+    mockClose.mockReset();
+    mockUseExceptionFilter.mockReset();
+
     cortex = new Cortex({protocol: ProtocolEnum.HTTP, logger: TransportEnum.SILENT});
+    cortex['protocol'] = mockProtocol;
   });
 
   it('should register exception filter with protocol', () => {
@@ -64,8 +60,10 @@ describe('Cortex Error Handler', () => {
     expect(mockProtocol.listen).toHaveBeenCalled();
     
     const useExceptionFilterCallIndex = 
+      //@ts-expect-error
       mockProtocol.useExceptionFilter.mock.invocationCallOrder[0];
     const listenCallIndex = 
+      //@ts-expect-error
       mockProtocol.listen.mock.invocationCallOrder[0];
     
     expect(useExceptionFilterCallIndex).toBeLessThan(listenCallIndex);
