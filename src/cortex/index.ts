@@ -1,4 +1,4 @@
-export { Cortex } from "./cortex";
-export { CortexInterface } from "./cortex.interface";
-export { CortexOptionsInterface } from "./cortex.interface";
-export { DEFAULT_OPTIONS } from "./cortext.constant";
+export * from "./cortex";
+export * from "./cortex.interface";
+export * from "./cortex.interface";
+export * from "./cortext.constant";

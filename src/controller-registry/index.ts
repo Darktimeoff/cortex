@@ -1,2 +1,2 @@
-export { ControllerRegistry } from "./controller-registry";
-export { ControllerRegistryInterface } from "./controller-registry.interface";
+export * from "./controller-registry";
+export * from "./controller-registry.interface";

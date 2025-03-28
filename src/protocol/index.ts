@@ -1,6 +1,6 @@
 
-export { ProtocolEnum } from "./enum/protocol.enum";
-export { ProtocolInterface } from "./protocol.interface";
-export { ProtocolFactory } from "./protocol-factory";
-export { HttpProtocol } from "./http/http";
-export { HttpInterface } from "./http/http.interface";
+export * from "./enum/protocol.enum";
+export * from "./protocol.interface";
+export * from "./protocol-factory";
+export * from "./http/http";
+export * from "./http/http.interface";

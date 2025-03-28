@@ -1,3 +1,3 @@
-export { Controller } from "./controller";
-export { ControllerInterface, ControllerFindResultInterface } from "./controller.interface";
-export { ControllerHandler, ControllerHandlerParamsType } from "./controller.type";
+export * from "./controller";
+export * from "./controller.interface";
+export * from "./controller.type";

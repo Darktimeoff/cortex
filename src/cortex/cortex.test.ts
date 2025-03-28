@@ -2,7 +2,6 @@ import { TransportEnum } from '@/logger';
 import { Cortex } from './cortex';
 import { ProtocolEnum } from '@/protocol';
 
-// Мокируем модуль перед объявлением переменных
 jest.mock('@/protocol/protocol-factory', () => {
   const mockListen = jest.fn().mockReturnThis();
   return {
